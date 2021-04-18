@@ -1,4 +1,4 @@
-def Dijkstra(place,st,en,cnt):
+def Dijkstra(st,en):
 	dis={}
 	pro={}
 	vis={}
