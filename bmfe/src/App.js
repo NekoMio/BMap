@@ -4,11 +4,15 @@ import axios from "axios"
 import './App.less';
 import { Switch, Layout, message, Select, Button } from "antd"
 import "ol/ol.css";
-import { Map, View } from "ol";
+import { Map, View, Feature } from "ol";
 import TileLayer from 'ol/layer/Tile';
 import { transform } from "ol/proj";
+import { Circle, Point } from "ol/geom";
+import "ol/style";
 import OSM from 'ol/source/OSM';
-
+import { Vector as sourceVector } from 'ol/source'
+import { Vector as LayerVector } from 'ol/layer'
+import { Fill, Stroke, Style } from 'ol/style';
 const { Option } = Select;
 
 const { Header, Content, Sider } = Layout;
@@ -23,35 +27,60 @@ class MyMap extends React.Component {
   addpathend = -1;
   delpathstart = -1;
   delpathend = -1;
-  
+  sourceFeatures = new sourceVector();
+  layerVector;
   constructor(props) {
     super(props);
-    this.state = {pointlist: []};
+    this.state = { pointlist: [] };
+    this.layerVector = new LayerVector({ source: this.sourceFeatures })
   }
-  componentDidMount(){
-      var map = new Map({
-          view: new View({
-            // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
-            center: [12944596.171207758, 4888630.582496259],
-            zoom: 17
+  componentDidMount() {
+    var map = new Map({
+      view: new View({
+        // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
+        center: [12944596.171207758, 4888630.582496259],
+        zoom: 17
+      }),
+      layers: [
+        new TileLayer({
+          source: new OSM()
+        })
+      ],
+      target: 'map'
+    });
+    this.showData();
+    map.on('singleclick', (evt) => {
+      let coordinate = evt.coordinate;
+      if (this.addpointmode) {
+        this.addPoint(coordinate)
+      }
+      if (this.addpathmode) {
+        this.addPath(coordinate)
+      }
+      console.log(coordinate);
+    })
+  }
+
+  showData() {
+    axios.get("/api/getpointlist").then((response) => {
+      this.pointdata = response.data;
+      for (let i in pointdata) {
+        let feature = new Feature({
+          geometry: new Point(this.pointdata[i].coord),
+          name: this.pointdata[i].id
+        });
+        feature.setStyle(new Style({
+          image: new Circle({
+            radius: 6,
+            fill: Fill({ color: "rgba(255,0,0,1)" }),
+            stroke: Stroke({ color: "rgba(0,0,0,1)" })
           }),
-          layers: [
-            new TileLayer({
-              source: new OSM()
-            })
-          ],
-          target: 'map'
-      });
-      map.on('singleclick', (evt) => {
-        let coordinate = evt.coordinate;
-        if (this.addpointmode) {
-          this.addPoint(coordinate)
-        }
-        if (this.addpathmode) {
-          this.addPath(coordinate)
-        }
-        console.log(coordinate);
-      })
+        }));
+        this.sourceFeatures.addFeatures([feature]);
+      }
+    }).then(() => {
+      
+    })
   }
 
   switchAddPointMode(checked) {
@@ -99,7 +128,7 @@ class MyMap extends React.Component {
   getpathend(val) {
     this.addpathend = val.key
   }
-  
+
   addPath() {
     if (this.addpathstart === -1 || this.addpathend === -1) {
       return
@@ -129,88 +158,88 @@ class MyMap extends React.Component {
     }
   }
 
-  render(){
+  render() {
     const { pointlist } = this.state;
-    let editPart1 = (<div className="edit" style={{marginLeft:"30px"}}>
-                      <h1>编辑模块</h1>
-                      <p>启动加点模式 <Switch disabled onChange={this.switchAddPointMode} /></p>
-                      {/* <p>启动加路径模式 <Switch disabled onChange={this.switchAddPathMode} /></p> */}
-                      <br/>
-                      <h2>添加路径</h2>
-                      <Select
-                        id="addpathstart"
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="选择路径起点"
-                        optionFilterProp="children"
-                        onSearch={this.getPointList}
-                        onChange={this.getpathstart}
-                        filterOption={(input, option) =>
-                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                        }
-                      ></Select>
-                      {
-                        pointlist.map((item, index) => {
-                          <Option key = {index} value = {item}> {item} </Option>
-                        })
-                      }
-                      <Select
-                        id="addpathend"
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="选择路径终点"
-                        optionFilterProp="children"
-                        onSearch={this.getPointList}
-                        onChange={this.getpathend}
-                        filterOption={(input, option) =>
-                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                        }
-                      ></Select>
-                      {
-                        pointlist.map((item, index) => {
-                          <Option key = {index} value = {item}> {item} </Option>
-                        })
-                      }
-                      <Button type="primary" onClick={this.addPath} disabled>添加路径</Button>
+    let editPart1 = (<div className="edit" style={{ marginLeft: "30px" }}>
+      <h1>编辑模块</h1>
+      <p>启动加点模式 <Switch disabled onChange={this.switchAddPointMode} /></p>
+      {/* <p>启动加路径模式 <Switch disabled onChange={this.switchAddPathMode} /></p> */}
+      <br />
+      <h2>添加路径</h2>
+      <Select
+        id="addpathstart"
+        showSearch
+        style={{ width: 200 }}
+        placeholder="选择路径起点"
+        optionFilterProp="children"
+        onSearch={this.getPointList}
+        onChange={this.getpathstart}
+        filterOption={(input, option) =>
+          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        }
+      ></Select>
+      {
+        pointlist.map((item, index) => {
+          <Option key={item.id} value={item.id}> {item.id} </Option>
+        })
+      }
+      <Select
+        id="addpathend"
+        showSearch
+        style={{ width: 200 }}
+        placeholder="选择路径终点"
+        optionFilterProp="children"
+        onSearch={this.getPointList}
+        onChange={this.getpathend}
+        filterOption={(input, option) =>
+          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        }
+      ></Select>
+      {
+        pointlist.map((item, index) => {
+          <Option key={index} value={item}> {item} </Option>
+        })
+      }
+      <Button type="primary" onClick={this.addPath} disabled>添加路径</Button>
 
-                      <br/>
-                      <h2>删除路径</h2>
-                      <Select
-                        id="addpathstart"
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="选择路径起点"
-                        optionFilterProp="children"
-                        onSearch={this.getPointList}
-                        onChange={this.getdelpathstart}
-                        filterOption={(input, option) =>
-                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                        }
-                      ></Select>
-                      {
-                        pointlist.map((item, index) => {
-                          <Option key = {index} value = {item}> {item} </Option>
-                        })
-                      }
-                      <Select
-                        id="addpathend"
-                        showSearch
-                        style={{ width: 200 }}
-                        placeholder="选择路径终点"
-                        optionFilterProp="children"
-                        onSearch={this.getPointList}
-                        onChange={this.getdelpathend}
-                        filterOption={(input, option) =>
-                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                        }
-                      ></Select>
-                      {
-                        pointlist.map((item, index) => {
-                          <Option key = {index} value = {item}> {item} </Option>
-                        })
-                      }
-                      <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
-                    </div>)
+      <br />
+      <h2>删除路径</h2>
+      <Select
+        id="addpathstart"
+        showSearch
+        style={{ width: 200 }}
+        placeholder="选择路径起点"
+        optionFilterProp="children"
+        onSearch={this.getPointList}
+        onChange={this.getdelpathstart}
+        filterOption={(input, option) =>
+          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        }
+      ></Select>
+      {
+        pointlist.map((item, index) => {
+          <Option key={index} value={item}> {item} </Option>
+        })
+      }
+      <Select
+        id="addpathend"
+        showSearch
+        style={{ width: 200 }}
+        placeholder="选择路径终点"
+        optionFilterProp="children"
+        onSearch={this.getPointList}
+        onChange={this.getdelpathend}
+        filterOption={(input, option) =>
+          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        }
+      ></Select>
+      {
+        pointlist.map((item, index) => {
+          <Option key={item.id} value={item.id}> {item.id} </Option>
+        })
+      }
+      <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
+    </div>)
     return (
       <div className="App">
         <Header>
@@ -232,7 +261,7 @@ class MyMap extends React.Component {
 function App() {
   return (
     <MyMap />
-    
+
   );
 }
 
