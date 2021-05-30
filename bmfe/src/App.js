@@ -134,7 +134,7 @@ class MyMap extends React.Component {
       return
     }
     else {
-      axios.post("/apt/addpath", {
+      axios.post("/api/addpath", {
         start: this.addpathstart,
         end: this.addpathend
       })
@@ -151,7 +151,7 @@ class MyMap extends React.Component {
       return
     }
     else {
-      axios.post("/apt/delpath", {
+      axios.post("/api/delpath", {
         start: this.delpathstart,
         end: this.delpathend
       })
