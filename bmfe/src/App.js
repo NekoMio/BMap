@@ -7,7 +7,7 @@ import "ol/ol.css";
 import { Map, View, Feature } from "ol";
 import TileLayer from 'ol/layer/Tile';
 import { transform } from "ol/proj";
-import { Circle, Point } from "ol/geom";
+import { Circle, Point, LineString } from "ol/geom";
 import "ol/style";
 import OSM from 'ol/source/OSM';
 import { Vector as sourceVector } from 'ol/source'
@@ -29,13 +29,14 @@ class MyMap extends React.Component {
   delpathend = -1;
   sourceFeatures = new sourceVector();
   layerVector;
+  map;
   constructor(props) {
     super(props);
     this.state = { pointlist: [] };
     this.layerVector = new LayerVector({ source: this.sourceFeatures })
   }
   componentDidMount() {
-    var map = new Map({
+    this.map = new Map({
       view: new View({
         // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
         center: [12944596.171207758, 4888630.582496259],
@@ -79,7 +80,29 @@ class MyMap extends React.Component {
         this.sourceFeatures.addFeatures([feature]);
       }
     }).then(() => {
-      
+      axios.get("/api/getpath").then((response) => {
+        this.pathdata = response.data;
+        for (let i in this.pathdata) {
+          let start = this.pointdata.find(x => x.id === this.pathdata[i].start).coord;
+          let end = this.pointdata.find(x => x.id === this.pathdata[i].end).coord;
+          let line = new LineString([start, end]);
+          let PathLayer = new LayerVector({
+            source: new sourceVector({
+              features: [
+                new Feature({geometry: line})
+              ]
+            }),
+            style: [
+              new Stroke({
+                width: 3,
+                color: "#cc0000",
+                lineDash: [0.1, 5]
+              })
+            ]
+          });
+          this.map.addLayer(PathLayer);g
+        }
+      })
     })
   }
 
