@@ -3,6 +3,7 @@ import React from "react"
 import axios from "axios"
 import './App.less';
 import { Switch, Layout, message, Select, Button } from "antd"
+import { SwapOutlined } from "@ant-design/icons"
 import "ol/ol.css";
 import { Map, View, Feature } from "ol";
 import TileLayer from 'ol/layer/Tile';
@@ -13,9 +14,12 @@ import OSM from 'ol/source/OSM';
 import { Vector as sourceVector } from 'ol/source'
 import { Vector as LayerVector } from 'ol/layer'
 import { Fill, Icon, Stroke, Style } from 'ol/style';
+import { Select } from "ol/interaction";
 const { Option } = Select;
 
+
 const { Header, Content, Sider } = Layout;
+
 class MyMap extends React.Component {
   editmode = 1;
   lastcoord;
@@ -27,15 +31,19 @@ class MyMap extends React.Component {
   addpathend = -1;
   delpathstart = -1;
   delpathend = -1;
-  sourceFeatures = new sourceVector();
-  layerVector;
-  navstart;
-  navend;
+  navstart = -1;
+  navend = -1;
+  navpartstartbutton = <Button type="primary">选择导航起点</Button>;
+  navpartendbutton = <Button>选择导航终点</Button>;
+  navpartpathbutton = <Button>开始导航</Button>;
   map;
   constructor(props) {
     super(props);
-    this.state = { pointlist: [] };
-    this.layerVector = new LayerVector({ source: this.sourceFeatures })
+    this.state = { pointlist: [], 
+                   navpartstartbutton: this.navpartstartbutton,
+                   navpartendbutton: this.navpartendbutton,
+                   navpartpathbutton: this.navpartpathbutton
+                   };
   }
   componentDidMount() {
     this.map = new Map({
@@ -62,11 +70,22 @@ class MyMap extends React.Component {
       }
       console.log(coordinate);
     })
+    hoverselect = new Select({condition: pointerMove});
+    clickselect = new Select();
+    this.map.addInteraction(hoverselect);
+    this.map.addInteraction(clickselect);
+    hoverselect.on("select", (e) => {
+
+    })
+    clickselect.on("select", (e) => {
+      console.log(e.target.getFeatures())
+    })
   }
 
   showData() {
     axios.get("/api/getpointlist").then((response) => {
       this.pointdata = response.data;
+      let sourceFeatures = new sourceVector(),
       for (let i in pointdata) {
         let feature = new Feature({
           geometry: new Point(this.pointdata[i].coord),
@@ -79,8 +98,12 @@ class MyMap extends React.Component {
             stroke: Stroke({ color: "rgba(0,0,0,1)" })
           }),
         }));
-        this.sourceFeatures.addFeatures([feature]);
+        sourceFeatures.addFeatures([feature]);
       }
+      let layerVector = new LayerVector({
+        source: sourceFeatures
+      })
+      this.map.addLayer(layerVector)
     }).then(() => {
       axios.get("/api/getpath").then((response) => {
         this.pathdata = response.data;
@@ -191,12 +214,18 @@ class MyMap extends React.Component {
     }
   }
 
-  getNavStart(val) {
-    this.navstart = val.key;
+  switchNavStartAndEnd() {
+    if (this.navstart === this.navend) {
+      return
+    }
+    [this.navstart, this.navend] = [this.navend, this.navstart]
+    [this.navpartstartbutton, this.navpartendbutton] = [this.navpartendbutton, this.navpartstartbutton]
+    this.setState({
+      navpartstartbutton: this.navpartstartbutton,
+      navpartendbutton: this.navpartendbutton,
+    })
   }
-  getNavEnd(val) {
-    this.navend = val.key;
-  }
+
   getNavPath() {
     if (this.navstart === -1) {
       message.error("请选择起点");
@@ -245,7 +274,7 @@ class MyMap extends React.Component {
     })
   }
   render() {
-    const { pointlist } = this.state;
+    const { pointlist, navpartstartbutton, navpartpathbutton, navpartendbutton } = this.state;
     let editPart1 = (<div className="edit" style={{ marginLeft: "30px" }}>
       <h1>编辑模块</h1>
       <p>启动加点模式 <Switch disabled onChange={this.switchAddPointMode} /></p>
@@ -325,7 +354,15 @@ class MyMap extends React.Component {
         })
       }
       <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
-    </div>)
+      </div>);
+    let navPart = (
+      <div className="navPart">
+        { navpartstartbutton }
+        <Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={}></Button>
+        { navpartendbutton }
+        { navpartpathbutton }
+      </div>
+    )
     return (
       <div className="App">
         <Header>
@@ -335,39 +372,7 @@ class MyMap extends React.Component {
           {
             this.editmode === 1 ? editPart1 : null
           }
-          <Select
-            showSearch
-            style={{ width: "40%" }}
-            placeholder="选择导航起点"
-            optionFilterProp="children"
-            onSearch={this.getPointList}
-            onChange={this.getNavStart}
-            filterOption={(input, option) =>
-              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            }
-          ></Select>
-          {
-            pointlist.map((item, index) => {
-              <Option key={item.id} value={item.id}> {item.id} </Option>
-            })
-          }
-          <Select
-            showSearch
-            style={{ width: "40%" }}
-            placeholder="选择导航终点"
-            optionFilterProp="children"
-            onSearch={this.getPointList}
-            onChange={this.getNavEnd}
-            filterOption={(input, option) =>
-              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            }
-          ></Select>
-          {
-            pointlist.map((item, index) => {
-              <Option key={item.id} value={item.id}> {item.id} </Option>
-            })
-          }
-          <Button type="primary" onClick={this.getNavPath}>查询路线</Button>
+          { navPart }
         </Sider>
         <Content className="mapbox">
           <div id="map" className="map"></div>
