@@ -38,5 +38,5 @@ def Dijkstra(start,end,vertex,edge,op):
 	while now!=start:
 		ans=ans.append(now)
 		now=pre[now]
-	ans.append(start)
-	return ans
+	ans=ans.append(start)
+	return ans,dis[end]
