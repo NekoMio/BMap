@@ -14,39 +14,40 @@ import OSM from 'ol/source/OSM';
 import { Vector as sourceVector } from 'ol/source'
 import { Vector as LayerVector } from 'ol/layer'
 import { Fill, Icon, Stroke, Style } from 'ol/style';
-import { Select } from "ol/interaction";
+import { Select as olSelect } from "ol/interaction";
+import { pointerMove } from 'ol/events/condition';
 const { Option } = Select;
 
 
 const { Header, Content, Sider } = Layout;
 
+let editmode = 1;
+let addpointmode = 0;
+let pointdata = [];
+let pathdata = [];
+let addpathstart = -1;
+let addpathend = -1;
+let delpathstart = -1;
+let delpathend = -1;
+let navstart = -1;
+let navend = -1;
+let navpartstartbutton = <Button type="primary">选择导航起点</Button>;
+let navpartendbutton = <Button>选择导航终点</Button>;
+let navpartpathbutton = <Button>开始导航</Button>;
+let map;
+
 class MyMap extends React.Component {
-  editmode = 1;
-  lastcoord;
-  addpointmode = 0;
-  addpathmode = 0;
-  pointdata = [];
-  pathdata = [];
-  addpathstart = -1;
-  addpathend = -1;
-  delpathstart = -1;
-  delpathend = -1;
-  navstart = -1;
-  navend = -1;
-  navpartstartbutton = <Button type="primary">选择导航起点</Button>;
-  navpartendbutton = <Button>选择导航终点</Button>;
-  navpartpathbutton = <Button>开始导航</Button>;
-  map;
   constructor(props) {
     super(props);
     this.state = { pointlist: [], 
-                   navpartstartbutton: this.navpartstartbutton,
-                   navpartendbutton: this.navpartendbutton,
-                   navpartpathbutton: this.navpartpathbutton
+                   navpartstartbutton: navpartstartbutton,
+                   navpartendbutton: navpartendbutton,
+                   navpartpathbutton: navpartpathbutton
                    };
+    
   }
   componentDidMount() {
-    this.map = new Map({
+    map = new Map({
       view: new View({
         // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
         center: [12944596.171207758, 4888630.582496259],
@@ -59,21 +60,18 @@ class MyMap extends React.Component {
       ],
       target: 'map'
     });
-    this.showData();
+    // this.showData();
     map.on('singleclick', (evt) => {
       let coordinate = evt.coordinate;
-      if (this.addpointmode) {
+      if (addpointmode) {
         this.addPoint(coordinate)
-      }
-      if (this.addpathmode) {
-        this.addPath(coordinate)
       }
       console.log(coordinate);
     })
-    hoverselect = new Select({condition: pointerMove});
-    clickselect = new Select();
-    this.map.addInteraction(hoverselect);
-    this.map.addInteraction(clickselect);
+    let hoverselect = new olSelect({condition: pointerMove});
+    let clickselect = new olSelect();
+    map.addInteraction(hoverselect);
+    map.addInteraction(clickselect);
     hoverselect.on("select", (e) => {
 
     })
@@ -84,12 +82,12 @@ class MyMap extends React.Component {
 
   showData() {
     axios.get("/api/getpointlist").then((response) => {
-      this.pointdata = response.data;
-      let sourceFeatures = new sourceVector(),
+      pointdata = response.data;
+      let sourceFeatures = new sourceVector()
       for (let i in pointdata) {
         let feature = new Feature({
-          geometry: new Point(this.pointdata[i].coord),
-          name: this.pointdata[i].id
+          geometry: new Point(pointdata[i].coord),
+          name: pointdata[i].id
         });
         feature.setStyle(new Style({
           image: new Circle({
@@ -103,13 +101,13 @@ class MyMap extends React.Component {
       let layerVector = new LayerVector({
         source: sourceFeatures
       })
-      this.map.addLayer(layerVector)
+      map.addLayer(layerVector)
     }).then(() => {
       axios.get("/api/getpath").then((response) => {
-        this.pathdata = response.data;
-        for (let i in this.pathdata) {
-          let start = this.pointdata.find(x => x.id === this.pathdata[i].start).coord;
-          let end = this.pointdata.find(x => x.id === this.pathdata[i].end).coord;
+        pathdata = response.data;
+        for (let i in pathdata) {
+          let start = pointdata.find(x => x.id === pathdata[i].start).coord;
+          let end = pointdata.find(x => x.id === pathdata[i].end).coord;
           let line = new LineString([start, end]);
           let PathLayer = new LayerVector({
             source: new sourceVector({
@@ -125,7 +123,7 @@ class MyMap extends React.Component {
               })
             ]
           });
-          this.map.addLayer(PathLayer);
+          map.addLayer(PathLayer);
         }
       }).catch((error) => {
         message.error(error)
@@ -138,74 +136,74 @@ class MyMap extends React.Component {
   switchAddPointMode(checked) {
     // showPointForm();
     if (checked) {
-      this.addpointmode = true;
+      addpointmode = true;
     } else {
-      this.addpointmode = false;
+      addpointmode = false;
     }
   }
   addPoint(coordinate) {
     axios.post("/api/addpoint", {
       coord: coordinate
-      // id: this.pointdata.length() + 1
+      // id: pointdata.length() + 1
     }).then((response) => {
       message.success(`成功添加 ${coordinate}`);
-      this.pointdata = response.data;
+      pointdata = response.data;
     }).catch((error) => {
       message.error(error)
     })
   }
   deleteLastOne() {
     axios.post("/api/deletepoint", {
-      id: this.pointdata.length()
+      id: pointdata.length()
     }).then((response) => {
-      message.success(`成果删除 id ${this.pointdata.length()}`);
-      this.pointdata.pop();
+      message.success(`成果删除 id ${pointdata.length()}`);
+      pointdata.pop();
     }).catch((error) => {
       message.error(error);
     })
   }
   getPointList() {
-    if (this.pointdata.length() === 0) {
+    if (pointdata.length() === 0) {
       axios.get("/api/getpointlist").then((response) => {
-        this.pointdata = response.data
+        pointdata = response.data
       })
     }
     this.setState({
-      pointlist: this.pointdata
+      pointlist: pointdata
     })
   }
   getpathstart(val) {
-    this.addpathstart = val.key;
+    addpathstart = val.key;
   }
   getpathend(val) {
-    this.addpathend = val.key
+    addpathend = val.key
   }
 
   addPath() {
-    if (this.addpathstart === -1 || this.addpathend === -1) {
+    if (addpathstart === -1 || addpathend === -1) {
       return
     }
     else {
       axios.post("/api/addpath", {
-        start: this.addpathstart,
-        end: this.addpathend
+        start: addpathstart,
+        end: addpathend
       })
     }
   }
   getdelpathstart(val) {
-    this.delpathstart = val.key;
+    delpathstart = val.key;
   }
   getdelpathend(val) {
-    this.delpathend = val.key
+    delpathend = val.key
   }
   deletePath() {
-    if (this.delpathstart === -1 || this.delpathend === -1) {
+    if (delpathstart === -1 || delpathend === -1) {
       return
     }
     else {
       axios.post("/api/delpath", {
-        start: this.delpathstart,
-        end: this.delpathend
+        start: delpathstart,
+        end: delpathend
       }).then((response) => {
         message.success("删除成功")
       }).catch((error) => {
@@ -215,32 +213,33 @@ class MyMap extends React.Component {
   }
 
   switchNavStartAndEnd() {
-    if (this.navstart === this.navend) {
+    // console.log(map)
+    if (navstart === navend) {
       return
     }
-    [this.navstart, this.navend] = [this.navend, this.navstart]
-    [this.navpartstartbutton, this.navpartendbutton] = [this.navpartendbutton, this.navpartstartbutton]
+    [navstart, navend] = [navend, navstart]
+    [navpartstartbutton, navpartendbutton] = [navpartendbutton, navpartstartbutton]
     this.setState({
-      navpartstartbutton: this.navpartstartbutton,
-      navpartendbutton: this.navpartendbutton,
+      navpartstartbutton: navpartstartbutton,
+      navpartendbutton: navpartendbutton,
     })
   }
 
   getNavPath() {
-    if (this.navstart === -1) {
+    if (navstart === -1) {
       message.error("请选择起点");
     }
-    if (this.navend === -1) {
+    if (navend === -1) {
       message.error("请选择终点");
     }
     axios.post("/api/getnavpath", {
-      start: this.navstart,
-      end: this.navend
+      start: navstart,
+      end: navend
     }).then((response) => {
       let navdata = response.data;
-      linepoint = [];
+      let linepoint = [];
       for (let i in navdata) {
-        linepoint.push(this.pointdata.find(x => x.id === navdata[i]).coord);
+        linepoint.push(pointdata.find(x => x.id === navdata[i]).coord);
       }
       let linestring = new LineString(linepoint);
       let linestringfeature = new Feature({
@@ -268,7 +267,7 @@ class MyMap extends React.Component {
           features: [linestringfeature, endmakerfeature]
         })
       });
-      this.map.addLayer(navLayer);
+      map.addLayer(navLayer);
     }).catch((error) => {
       message.error(error);
     })
@@ -279,7 +278,7 @@ class MyMap extends React.Component {
       <h1>编辑模块</h1>
       <p>启动加点模式 <Switch disabled onChange={this.switchAddPointMode} /></p>
       {/* <p>启动加路径模式 <Switch disabled onChange={this.switchAddPathMode} /></p> */}
-      <br />
+      {/* <br /> */}
       <h2>添加路径</h2>
       <Select
         id="addpathstart"
@@ -356,10 +355,11 @@ class MyMap extends React.Component {
       <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
       </div>);
     let navPart = (
-      <div className="navPart">
+      <div className="navPart" style={{ marginLeft: "30px" }}>
+        <h2>导航模块</h2>
         { navpartstartbutton }
-        <Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={}></Button>
-        { navpartendbutton }
+        &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
+        { navpartendbutton }&nbsp;&nbsp;&nbsp;&nbsp;
         { navpartpathbutton }
       </div>
     )
@@ -370,7 +370,7 @@ class MyMap extends React.Component {
         </Header>
         <Sider className="control">
           {
-            this.editmode === 1 ? editPart1 : null
+            editmode === 1 ? editPart1 : null
           }
           { navPart }
         </Sider>
