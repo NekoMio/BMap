@@ -12,7 +12,7 @@ import "ol/style";
 import OSM from 'ol/source/OSM';
 import { Vector as sourceVector } from 'ol/source'
 import { Vector as LayerVector } from 'ol/layer'
-import { Fill, Stroke, Style } from 'ol/style';
+import { Fill, Icon, Stroke, Style } from 'ol/style';
 const { Option } = Select;
 
 const { Header, Content, Sider } = Layout;
@@ -29,6 +29,8 @@ class MyMap extends React.Component {
   delpathend = -1;
   sourceFeatures = new sourceVector();
   layerVector;
+  navstart;
+  navend;
   map;
   constructor(props) {
     super(props);
@@ -89,7 +91,7 @@ class MyMap extends React.Component {
           let PathLayer = new LayerVector({
             source: new sourceVector({
               features: [
-                new Feature({geometry: line})
+                new Feature({ geometry: line })
               ]
             }),
             style: [
@@ -100,9 +102,13 @@ class MyMap extends React.Component {
               })
             ]
           });
-          this.map.addLayer(PathLayer);g
+          this.map.addLayer(PathLayer);
         }
+      }).catch((error) => {
+        message.error(error)
       })
+    }).catch((error) => {
+      message.error(error)
     })
   }
 
@@ -177,10 +183,67 @@ class MyMap extends React.Component {
       axios.post("/api/delpath", {
         start: this.delpathstart,
         end: this.delpathend
+      }).then((response) => {
+        message.success("删除成功")
+      }).catch((error) => {
+        message.error(error)
       })
     }
   }
 
+  getNavStart(val) {
+    this.navstart = val.key;
+  }
+  getNavEnd(val) {
+    this.navend = val.key;
+  }
+  getNavPath() {
+    if (this.navstart === -1) {
+      message.error("请选择起点");
+    }
+    if (this.navend === -1) {
+      message.error("请选择终点");
+    }
+    axios.post("/api/getnavpath", {
+      start: this.navstart,
+      end: this.navend
+    }).then((response) => {
+      let navdata = response.data;
+      linepoint = [];
+      for (let i in navdata) {
+        linepoint.push(this.pointdata.find(x => x.id === navdata[i]).coord);
+      }
+      let linestring = new LineString(linepoint);
+      let linestringfeature = new Feature({
+        geometry: linestring,
+        style: new Style({
+          stroke: new Stroke({
+            width: 5,
+            color: "#00ccff"
+          })
+        })
+      });
+      let endmakerfeature = new Feature({
+        geometry: new Point(linepoint[linepoint.length - 1]),
+        style: new Style({
+          image: new Icon({
+            src: "https://cdn.jsdelivr.net/gh/jonataswalker/map-utils@master/images/marker.png",
+            anchor: [0.5, 1],
+            opacity: 0.7,
+            rotateWithView: false
+          })
+        })
+      });
+      let navLayer = new LayerVector({
+        source: new sourceVector({
+          features: [linestringfeature, endmakerfeature]
+        })
+      });
+      this.map.addLayer(navLayer);
+    }).catch((error) => {
+      message.error(error);
+    })
+  }
   render() {
     const { pointlist } = this.state;
     let editPart1 = (<div className="edit" style={{ marginLeft: "30px" }}>
@@ -272,6 +335,39 @@ class MyMap extends React.Component {
           {
             this.editmode === 1 ? editPart1 : null
           }
+          <Select
+            showSearch
+            style={{ width: "40%" }}
+            placeholder="选择导航起点"
+            optionFilterProp="children"
+            onSearch={this.getPointList}
+            onChange={this.getNavStart}
+            filterOption={(input, option) =>
+              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+            }
+          ></Select>
+          {
+            pointlist.map((item, index) => {
+              <Option key={item.id} value={item.id}> {item.id} </Option>
+            })
+          }
+          <Select
+            showSearch
+            style={{ width: "40%" }}
+            placeholder="选择导航终点"
+            optionFilterProp="children"
+            onSearch={this.getPointList}
+            onChange={this.getNavEnd}
+            filterOption={(input, option) =>
+              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+            }
+          ></Select>
+          {
+            pointlist.map((item, index) => {
+              <Option key={item.id} value={item.id}> {item.id} </Option>
+            })
+          }
+          <Button type="primary" onClick={this.getNavPath}>查询路线</Button>
         </Sider>
         <Content className="mapbox">
           <div id="map" className="map"></div>
@@ -279,7 +375,6 @@ class MyMap extends React.Component {
       </div>
     )
   }
-
 }
 function App() {
   return (
