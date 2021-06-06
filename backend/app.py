@@ -1,4 +1,5 @@
 import pickle
+import os
 from flask import Flask, request, jsonify
 from dijkstra import Dijkstra
 
@@ -8,7 +9,7 @@ class Map:
     def __init__(self):
         self.vertex = {}
         self.cntVertex = 0
-        self.edge = set()
+        self.edge = {}
     def addPoint(self, x, y):   # x,y are the Latitude and Longitude of the vertex, in float.
         self.vertex[self.cntVertex] = [x, y]
         self.cntVertex += 1
@@ -16,29 +17,30 @@ class Map:
     def delPoint(self, id):
         del self.vertex[id]
         return 0
-    def addEdge(self, x, y):    # x,y are the ids of the begin and end vertex.
-        self.edge.add((x,y))
+    def addEdge(self, x, y, z, p):    # x,y are the ids of the begin and end vertex.
+        self.edge[(x, y)]=(z, p)
         return 0
     def delEdge(self, x, y):
-        self.edge.remove((x,y))
+        del self.edge.remove[(x,y)]
         return 0
     def dump(self):
         with open('app.storage', 'wb') as f:
             pickle.dump(self, f, 0)
 
 def loadMap() -> Map:
+    if os.path.exists('app.storage') == False:
+        return Map()
     with open('app.storage', 'rb') as f: # load bMap from pickle file
         return pickle.load(f)
 
 @app.before_first_request
 def init():
     global bMap
-    # bMap = Map() # only use this to initiate enduring storage
     bMap = loadMap()
 
 @app.route("/")
 def welcome():
-    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(list(bMap.edge))
+    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edge)
 
 @app.route("/api/addpoint/", methods=['POST'])
 def addPoint():
@@ -68,9 +70,9 @@ def dbgDump():
 
 @app.route('/api/addpath/', methods=['POST'])
 def addPath():
-    if 'start' not in request.json or 'end' not in request.json:
+    if 'start' not in request.json or 'end' not in request.json or 'len' not in request.json or 'cap' not in request.json:
         return "Invalid Argument", 400
-    ret = bMap.addEdge(request.json['start'], request.json['end'])
+    ret = bMap.addEdge(request.json['start'], request.json['end'], request.json['len'], request.json['cap'])
     bMap.dump()
     return str(ret)
 
@@ -86,8 +88,8 @@ def delPath():
 def getPath():
     return jsonify(list(bMap.edge))
 
-@app.route('/api/calcpath/')
+@app.route('/api/getnavpath/')
 def calcPath():
-    if 'start' not in request.json or 'end' not in request.json:
+    if 'start' not in request.json or 'end' not in request.json or 'option' not in request.json:
         return "Invalid Argument", 400
-    return str(Dijkstra(request.json['start'], request.json['end'], bMap.vertex, bMap.edge))
+    return jsonify(Dijkstra(request.json['start'], request.json['end'], bMap.vertex, bMap.edge, request.json['option']))

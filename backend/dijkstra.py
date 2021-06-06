@@ -1,32 +1,42 @@
-def Dijkstra(st,en):
-	dis={}
-	pro={}
+def Dijkstra(start,end,vertex,edge,op):
+	connect={}
+	for i in vertex.keys():
+		connect[i]={}
+	for i in edge.items():
+		if op==0:
+			connect[i[0][0]][i[0][1]]=i[1][0]
+			connect[i[0][1]][i[0][0]]=i[1][0]
+		else:
+			connect[i[0][0]][i[0][1]]=i[1][0]*i[1][1]
+			connect[i[0][1]][i[0][0]]=i[1][0]*i[1][1]
 	vis={}
-	for i in place:
-		dis[i]=1000000000
-		vis[i]=0
-	dis[st]=0
-	vis[st]=1
-	for i in place:
-		dis[i]=L[st][i]
-	for i in range(cnt-1):
-		ma=1000000000
-		tmp=st
-		for j in place:
-			if vis[j]==0 and dis[j]<ma:
-				ma=dis[j]
-				tmp=j
-		vis[tmp]=1
-		for j in place:
-			if vis[j]==0 and L[tmp][j]+dis[tmp]<dis[j]:
-				dis[j]=L[tmp][j]+dis[tmp]
-				pro[j]=tmp
-	now=en
+	pre={}
+	dis={}
+
+	for i in vertex.keys():
+		dis[i]=-1
+	dis[start]=0
+	for i in range(len(vertex)-1):
+		max_dis=-1
+		max_dis_vertex = 0
+		for j in vertex.keys():
+			if j in vis or dis[j] == -1:
+				continue
+			if max_dis==-1 or max_dis>dis[j]:
+				max_dis_vertex=j
+				max_dis=dis[j]
+		if max_dis==-1:
+			break
+		vis[max_dis_vertex]=1
+		for j in connect[max_dis_vertex]:
+			if dis[j]==-1 or dis[max_dis_vertex]+connect[max_dis_vertex][j]<dis[j]:
+				dis[j]=dis[max_dis_vertex]+connect[max_dis_vertex][j]
+				pre[j]=max_dis_vertex
+	now=end
 	ans=[]
-	while now!=st:
+	while now!=start:
 		ans.append(now)
-		now=pro[now]
-	ans.append(now)
-	return ans
-		
-	
+		now=pre[now]
+	ans.append(start)
+	ans.reverse()
+	return dis[end],ans
