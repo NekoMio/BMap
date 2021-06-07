@@ -31,20 +31,25 @@ let delpathstart = -1;
 let delpathend = -1;
 let navstart = -1;
 let navend = -1;
-let navpartstartbutton = <Button type="primary">选择导航起点</Button>;
-let navpartendbutton = <Button>选择导航终点</Button>;
-let navpartpathbutton = <Button>开始导航</Button>;
+let navpartstartbutton = "请选择起点";
+let navpartendbutton = "请选择终点";
+let choosenavstartmode = 0;
+let choosenavendmode = 0;
 let map;
 
 class MyMap extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { pointlist: [], 
-                   navpartstartbutton: navpartstartbutton,
-                   navpartendbutton: navpartendbutton,
-                   navpartpathbutton: navpartpathbutton
-                   };
-    
+    this.state = {
+      pointlist: [],
+      navpartstartbutton: navpartstartbutton,
+      navpartendbutton: navpartendbutton,
+      navstartbuttontype: "primary", 
+      navendbuttontype: "default", 
+      navstartbuttondisabled: false, 
+      navendbuttondisabled: false
+    };
+
   }
   componentDidMount() {
     map = new Map({
@@ -68,7 +73,7 @@ class MyMap extends React.Component {
       }
       console.log(coordinate);
     })
-    let hoverselect = new olSelect({condition: pointerMove});
+    let hoverselect = new olSelect({ condition: pointerMove });
     let clickselect = new olSelect();
     map.addInteraction(hoverselect);
     map.addInteraction(clickselect);
@@ -80,7 +85,7 @@ class MyMap extends React.Component {
     })
   }
 
-  showData() {
+  showData = () => {
     axios.get("/api/getpointlist").then((response) => {
       pointdata = response.data;
       let sourceFeatures = new sourceVector()
@@ -133,7 +138,7 @@ class MyMap extends React.Component {
     })
   }
 
-  switchAddPointMode(checked) {
+  switchAddPointMode = (checked) => {
     // showPointForm();
     if (checked) {
       addpointmode = true;
@@ -141,7 +146,7 @@ class MyMap extends React.Component {
       addpointmode = false;
     }
   }
-  addPoint(coordinate) {
+  addPoint = (coordinate) => {
     axios.post("/api/addpoint", {
       coord: coordinate
       // id: pointdata.length() + 1
@@ -152,7 +157,7 @@ class MyMap extends React.Component {
       message.error(error)
     })
   }
-  deleteLastOne() {
+  deleteLastOne = () => {
     axios.post("/api/deletepoint", {
       id: pointdata.length()
     }).then((response) => {
@@ -162,7 +167,7 @@ class MyMap extends React.Component {
       message.error(error);
     })
   }
-  getPointList() {
+  getPointList = () => {
     if (pointdata.length() === 0) {
       axios.get("/api/getpointlist").then((response) => {
         pointdata = response.data
@@ -172,14 +177,14 @@ class MyMap extends React.Component {
       pointlist: pointdata
     })
   }
-  getpathstart(val) {
+  getpathstart = (val) => {
     addpathstart = val.key;
   }
-  getpathend(val) {
+  getpathend = (val) => {
     addpathend = val.key
   }
 
-  addPath() {
+  addPath = () => {
     if (addpathstart === -1 || addpathend === -1) {
       return
     }
@@ -190,13 +195,13 @@ class MyMap extends React.Component {
       })
     }
   }
-  getdelpathstart(val) {
+  getdelpathstart = (val) => {
     delpathstart = val.key;
   }
-  getdelpathend(val) {
+  getdelpathend = (val) => {
     delpathend = val.key
   }
-  deletePath() {
+  deletePath = () => {
     if (delpathstart === -1 || delpathend === -1) {
       return
     }
@@ -212,25 +217,69 @@ class MyMap extends React.Component {
     }
   }
 
-  switchNavStartAndEnd() {
+  chooseNavStartModeOn = () => {
+    if (choosenavendmode === 1)
+      this.chooseNavEndModeOff();
+    message.info("请在地图上选择起点")
+    choosenavstartmode = 1;
+    this.setState({
+      navstartbuttontype: "default",
+      navstartbuttondisabled: true,
+      navpartstartbutton: "选择中",
+    });
+  }
+  chooseNavStartModeOff = () => {
+    choosenavstartmode = 0;
+    this.setState({
+      navstartbuttontype: "default",
+      navstartbuttondisabled: false,
+      navpartstartbutton: navpartstartbutton,
+    });
+  }
+  chooseNavEndModeOn = () => {
+    if (choosenavstartmode === 1)
+      this.chooseNavStartModeOff();
+    message.info("请在地图上选择终点")
+    choosenavendmode = 1;
+    this.setState({
+      navendbuttontype: "default",
+      navendbuttondisabled: true,
+      navpartendbutton: "选择中",
+    });
+  }
+  chooseNavEndModeOff = () => {
+    choosenavendmode = 0;
+    this.setState({
+      navendbuttontype: "default",
+      navendbuttondisabled: false,
+      navpartendbutton: navpartendbutton,
+    });
+  }
+  switchNavStartAndEnd = () => {
     // console.log(map)
     if (navstart === navend) {
       return
     }
-    [navstart, navend] = [navend, navstart]
-    [navpartstartbutton, navpartendbutton] = [navpartendbutton, navpartstartbutton]
+    [navstart, navend] = [navend, navstart];
+    let navpartstartbutton = this.state.navpartendbutton;
+    let navpartendbutton = this.state.navpartstartbutton;
     this.setState({
       navpartstartbutton: navpartstartbutton,
       navpartendbutton: navpartendbutton,
     })
   }
 
-  getNavPath() {
+
+  getNavPath = () => {
+    // console.log(navstart, navend);
+    // return;
     if (navstart === -1) {
       message.error("请选择起点");
+      return;
     }
     if (navend === -1) {
       message.error("请选择终点");
+      return;
     }
     axios.post("/api/getnavpath", {
       start: navstart,
@@ -273,7 +322,7 @@ class MyMap extends React.Component {
     })
   }
   render() {
-    const { pointlist, navpartstartbutton, navpartpathbutton, navpartendbutton } = this.state;
+    const { pointlist, navpartstartbutton, navpartendbutton, navstartbuttontype, navendbuttontype, navstartbuttondisabled, navendbuttondisabled } = this.state;
     let editPart1 = (<div className="edit" style={{ marginLeft: "30px" }}>
       <h1>编辑模块</h1>
       <p>启动加点模式 <Switch disabled onChange={this.switchAddPointMode} /></p>
@@ -353,16 +402,16 @@ class MyMap extends React.Component {
         })
       }
       <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
-      </div>);
-    let navPart = (
-      <div className="navPart" style={{ marginLeft: "30px" }}>
-        <h2>导航模块</h2>
-        { navpartstartbutton }
-        &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
-        { navpartendbutton }&nbsp;&nbsp;&nbsp;&nbsp;
-        { navpartpathbutton }
-      </div>
-    )
+    </div>);
+    // let navPart = (
+    //   <div className="navPart" style={{ marginLeft: "30px" }}>
+    //     <h2>导航模块</h2>
+    //     { navpartstartbutton }
+    //     &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
+    //     { navpartendbutton }&nbsp;&nbsp;&nbsp;&nbsp;
+    //     { navpartpathbutton }
+    //   </div>
+    // )
     return (
       <div className="App">
         <Header>
@@ -372,7 +421,12 @@ class MyMap extends React.Component {
           {
             editmode === 1 ? editPart1 : null
           }
-          { navPart }
+          <div className="navPart" style={{ marginLeft: "30px" }}>
+            <Button type={navstartbuttontype} disabled={navstartbuttondisabled} onClick={this.chooseNavStartModeOn}>{navpartstartbutton}</Button>
+            &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
+            <Button type={navendbuttontype} disabled={navendbuttondisabled} onClick={this.chooseNavEndModeOn}>{navpartendbutton}</Button>&nbsp;&nbsp;&nbsp;&nbsp;
+            <Button onClick={this.getNavPath}>开始导航</Button>
+          </div>
         </Sider>
         <Content className="mapbox">
           <div id="map" className="map"></div>
