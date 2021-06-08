@@ -1,9 +1,8 @@
-import logo from './logo.svg';
 import React from "react"
 import axios from "axios"
 import './App.less';
-import { Switch, Layout, message, Select, Button } from "antd"
-import { ConsoleSqlOutlined, SwapOutlined } from "@ant-design/icons"
+import { Switch, Layout, message, Select, Button, InputNumber } from "antd"
+import { SwapOutlined } from "@ant-design/icons"
 import "ol/ol.css";
 import { Map, View, Feature } from "ol";
 import TileLayer from 'ol/layer/Tile';
@@ -28,11 +27,12 @@ let pointdata = [];
 let pathdata = [];
 let addpathstart = -1;
 let addpathend = -1;
-let delpathstart = -1;
-let delpathend = -1;
 let navstart = -1;
 let navend = -1;
-let deletemode = 0;
+let addpathcap = 1;
+let PointLayer;
+let deletepointmode = 0;
+let deletepathmode = 0;
 let navpartstartbutton = "请选择起点";
 let navpartendbutton = "请选择终点";
 let choosenavstartmode = 0;
@@ -46,9 +46,9 @@ class MyMap extends React.Component {
       pointlist: [],
       navpartstartbutton: navpartstartbutton,
       navpartendbutton: navpartendbutton,
-      navstartbuttontype: "primary", 
-      navendbuttontype: "default", 
-      navstartbuttondisabled: false, 
+      navstartbuttontype: "primary",
+      navendbuttontype: "default",
+      navstartbuttondisabled: false,
       navendbuttondisabled: false
     };
 
@@ -75,8 +75,17 @@ class MyMap extends React.Component {
       }
       // console.log(coordinate);
     })
-    let hoverselect = new olSelect({ condition: pointerMove });
-    let clickselect = new olSelect();
+    let hoverselect = new olSelect({
+      condition: pointerMove,
+      // filter: function (feature, layer) {
+      //   return layer === PointLayer;
+      // }
+    });
+    let clickselect = new olSelect({
+      // filter: function (feature, layer) {
+      //   return layer === PointLayer;
+      // }
+    });
     map.addInteraction(hoverselect);
     map.addInteraction(clickselect);
     hoverselect.on("select", (e) => {
@@ -86,11 +95,29 @@ class MyMap extends React.Component {
       // console.log(e.target.getFeatures().getLength());
       if (e.target.getFeatures().getLength() > 0) {
         console.log(e.target.getFeatures().item(0).get("name"))
-        if (deletemode === 1) {
+        if (deletepointmode === 1) {
           this.deletePoint(e.target.getFeatures().item(0).get("name"));
+          return;
+        }
+        if (deletepathmode === 1) {
+          console.log(e.target.getFeatures().item(0).get("start"), e.target.getFeatures().item(0).get("end"))
+          this.deletePath(e.target.getFeatures().item(0).get("start"), e.target.getFeatures().item(0).get("end"));
+          return;
+        }
+        if (choosenavstartmode === 1) {
+          navstart = e.target.getFeatures().item(0).get("name");
+          navpartstartbutton = e.target.getFeatures().item(0).get("name").toString();
+          this.chooseNavStartModeOff();
+          return;
+        }
+        if (choosenavendmode === 1) {
+          navend = e.target.getFeatures().item(0).get("name");
+          navpartendbutton = e.target.getFeatures().item(0).get("name").toString();
+          this.chooseNavEndModeOff();
+          return;
         }
       }
-      
+
     })
   }
 
@@ -107,39 +134,44 @@ class MyMap extends React.Component {
         feature.setStyle(new Style({
           image: new Circle({
             radius: 6,
-            fill: new Fill({ color: 'rgba(255,0,0,1)' }),
+            fill: new Fill({ color: '#00ccff' }),
             stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
           }),
         }));
         sourceFeatures.addFeatures([feature]);
       }
-      let layerVector = new LayerVector({
+      PointLayer = new LayerVector({
         source: sourceFeatures
       })
       this.setState({
         pointlist: pointdata
       })
-      map.addLayer(layerVector)
+      map.addLayer(PointLayer)
     }).then(() => {
       axios.get("/api/getpath").then((response) => {
         pathdata = response.data;
+        console.log(pathdata);
         for (let i in pathdata) {
-          let start = pointdata.find(x => x.id === pathdata[i].start).coord;
-          let end = pointdata.find(x => x.id === pathdata[i].end).coord;
+          let start = pointdata.find(x => x.id === pathdata[i][0]).coord;
+          let end = pointdata.find(x => x.id === pathdata[i][1]).coord;
           let line = new LineString([start, end]);
           let PathLayer = new LayerVector({
             source: new sourceVector({
               features: [
-                new Feature({ geometry: line })
+                new Feature({ 
+                  geometry: line, 
+                  start: pathdata[i][0],
+                  end: pathdata[i][1]
+                })
               ]
             }),
-            style: [
-              new Stroke({
-                width: 3,
-                color: "#cc0000",
-                lineDash: [0.1, 5]
+            style: new Style({
+              stroke: new Stroke({
+                width: 6,
+                color: "#00ccff",
+                lineDash: [0.1, 10]
               })
-            ]
+            })
           });
           map.addLayer(PathLayer);
         }
@@ -161,9 +193,9 @@ class MyMap extends React.Component {
   }
   switchDeletePointMode = (checked) => {
     if (checked)
-      deletemode = 1;
+      deletepointmode = 1;
     else
-      deletemode = 0;
+      deletepointmode = 0;
   }
   addPoint = (coordinate) => {
     axios.post("/api/addpoint", {
@@ -205,43 +237,46 @@ class MyMap extends React.Component {
   //   })
   // }
   getpathstart = (val) => {
-    addpathstart = val.key;
+    // console.log(val);
+    addpathstart = val;
   }
   getpathend = (val) => {
-    addpathend = val.key
+    addpathend = val
   }
-
+  addpathcapchange = (val) => {
+    addpathcap = val;
+  }
   addPath = () => {
     if (addpathstart === -1 || addpathend === -1) {
       return
     }
     else {
+      let coord1 = pointdata.find(x => x.id === addpathstart);
+      let coord2 = pointdata.find(x => x.id === addpathend);
+      let len = (coord1.x - coord2.x) * (coord1.x - coord2.x) + (coord1.y - coord2.y) * (coord1.y - coord2.y);
       axios.post("/api/addpath", {
         start: addpathstart,
-        end: addpathend
+        end: addpathend,
+        len: len,
+        cap: addpathcap
       })
     }
   }
-  getdelpathstart = (val) => {
-    delpathstart = val.key;
+  switchDeletePathMode = (checked) => {
+    if (checked)
+      deletepathmode = 1
+    else
+    deletepathmode = 0;
   }
-  getdelpathend = (val) => {
-    delpathend = val.key
-  }
-  deletePath = () => {
-    if (delpathstart === -1 || delpathend === -1) {
-      return
-    }
-    else {
-      axios.post("/api/delpath", {
-        start: delpathstart,
-        end: delpathend
-      }).then((response) => {
-        message.success("删除成功")
-      }).catch((error) => {
-        message.error(error)
-      })
-    }
+  deletePath = (delpathstart, delpathend) => {
+    axios.post("/api/delpath", {
+      start: delpathstart,
+      end: delpathend
+    }).then((response) => {
+      message.success("删除成功")
+    }).catch((error) => {
+      message.error(error)
+    })
   }
 
   chooseNavStartModeOn = () => {
@@ -366,18 +401,19 @@ class MyMap extends React.Component {
         optionFilterProp="children"
         // onSearch={this.getPointList}
         onChange={this.getpathstart}
-        filterOption={false}
-        // filterOption={(input, option) =>
-        //   option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-        // }
+        // filterOption={false}
+        filterOption={(input, option) =>
+          // console.log(option.props)
+          option.props.children.toString().indexOf(input.toString()) >= 0
+        }
       >
         {
           pointlist.map((item, index) => {
-            return <Option key={item.id} value={item.id}> {item.id} </Option>
+            return <Option key={item.id} value={item.id}>{item.id}</Option>
           })
         }
       </Select>
-      
+
       <Select
         id="addpathend"
         showSearch
@@ -386,40 +422,52 @@ class MyMap extends React.Component {
         optionFilterProp="children"
         // onSearch={this.getPointList}
         onChange={this.getpathend}
-        filterOption={false}
-        // filterOption={(input, option) =>
-        //   option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-        // }
+        // filterOption={false}
+        filterOption={(input, option) =>
+          option.props.children.toString().indexOf(input.toString()) >= 0
+        }
       >
         {
           // console.log(pointlist)
           pointlist.map((item, index) => {
-            return <Option key={index} value={item}> {item} </Option>
+            return <Option key={item.id} value={item.id}>{item.id}</Option>
           })
         }
       </Select>
-      
-      <Button type="primary" onClick={this.addPath} disabled>添加路径</Button>
+      <InputNumber
+        style={{
+          width: 200,
+        }}
+        defaultValue="1"
+        min="1"
+        max="10"
+        step="0.01"
+        onChange={this.addpathcapchange}
+        stringMode
+      />
+      <Button type="primary" onClick={this.addPath}>添加路径</Button>
 
       <br />
-      <h2>删除路径</h2>
+      <p>启动删路径模式 <Switch onChange={this.switchDeletePathMode} /> </p>
+      {/* <h2>删除路径</h2>
       <Select
         id="addpathstart"
         showSearch
         style={{ width: 200 }}
         placeholder="选择路径起点"
         optionFilterProp="children"
-        onSearch={this.getPointList}
+        // onSearch={this.getPointList}
         onChange={this.getdelpathstart}
         filterOption={(input, option) =>
           option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
         }
-      ></Select>
-      {
-        pointlist.map((item, index) => {
-          <Option key={index} value={item}> {item} </Option>
-        })
-      }
+      >
+        {
+          pointlist.map((item, index) => {
+            return <Option key={item.id} value={item.id}> {item.id} </Option>
+          })
+        }
+      </Select>
       <Select
         id="addpathend"
         showSearch
@@ -431,13 +479,14 @@ class MyMap extends React.Component {
         filterOption={(input, option) =>
           option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
         }
-      ></Select>
-      {
+      >
+        {
         pointlist.map((item, index) => {
-          <Option key={item.id} value={item.id}> {item.id} </Option>
+          return <Option key={item.id} value={item.id}> {item.id} </Option>
         })
       }
-      <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button>
+      </Select>
+      <Button type="primary" onClick={this.deletePath} disabled>添加路径</Button> */}
     </div>);
     // let navPart = (
     //   <div className="navPart" style={{ marginLeft: "30px" }}>

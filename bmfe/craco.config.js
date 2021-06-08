@@ -3,7 +3,7 @@ const CracoLessPlugin = require('craco-less');
 module.exports = {
   devServer: {
     proxy: {
-      '/api': {
+      '/api/': {
         target: 'http://localhost:5000',
         changeOrigin: true
       }
