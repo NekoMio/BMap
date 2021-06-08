@@ -38,6 +38,7 @@ let navpartendbutton = "请选择终点";
 let choosenavstartmode = 0;
 let choosenavendmode = 0;
 let map;
+let pointFeatures;
 
 class MyMap extends React.Component {
   constructor(props) {
@@ -125,7 +126,7 @@ class MyMap extends React.Component {
     axios.get("/api/getpointlist").then((response) => {
       pointdata = response.data;
       // console.log(pointdata);
-      let sourceFeatures = new sourceVector()
+      pointFeatures = new sourceVector()
       for (let i in pointdata) {
         let feature = new Feature({
           geometry: new Point(pointdata[i].coord),
@@ -138,10 +139,10 @@ class MyMap extends React.Component {
             stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
           }),
         }));
-        sourceFeatures.addFeatures([feature]);
+        pointFeatures.addFeatures([feature]);
       }
       PointLayer = new LayerVector({
-        source: sourceFeatures
+        source: pointFeatures
       })
       this.setState({
         pointlist: pointdata
@@ -207,10 +208,22 @@ class MyMap extends React.Component {
         coord: coordinate,
         id: response.data
       });
+      let feature = new Feature({
+        geometry: new Point(coordinate),
+        name: response.data
+      });
+      feature.setStyle(new Style({
+        image: new Circle({
+          radius: 6,
+          fill: new Fill({ color: '#00ccff' }),
+          stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
+        }),
+      }));
+      pointFeatures.addFeatures([feature]);
       // console.log(response.data);
-      // this.setState({
-      //   pointlist: pointdata
-      // })
+      this.setState({
+        pointlist: pointdata
+      })
     }).catch((error) => {
       message.error(error)
     })
