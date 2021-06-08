@@ -23,7 +23,7 @@ class Map:
         self.edge[(x, y)]=(z, p)
         return 0
     def delEdge(self, x, y):
-        del self.edge.remove[(x,y)]
+        del self.edge[(x,y)]
         return 0
     def dump(self):
         with open('app.storage', 'wb') as f:
