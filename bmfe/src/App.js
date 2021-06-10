@@ -21,41 +21,59 @@ const { Option } = Select;
 
 const { Header, Content, Sider } = Layout;
 
-let editmode = 1;
-let addpointmode = 0;
-let pointdata = [];
-let pathdata = [];
-let addpathstart = -1;
-let addpathend = -1;
-let navstart = -1;
-let navend = -1;
-let addpathcap = 1;
-let PointLayer;
-let deletepointmode = 0;
-let deletepathmode = 0;
-let navpartstartbutton = "请选择起点";
-let navpartendbutton = "请选择终点";
-let choosenavstartmode = 0;
-let choosenavendmode = 0;
-let map;
-let pointFeatures;
+// let editmode = 1;
+// let addpointmode = 0;
+// let pointdata = [];
+// let pathdata = [];
+// let addpathstart = -1;
+// let addpathend = -1;
+// let navstart = -1;
+// let navend = -1;
+// let addpathcap = 1;
+// let PointLayer;
+// let deletepointmode = 0;
+// let deletepathmode = 0;
+// let navpartstartbutton = "请选择起点";
+// let navpartendbutton = "请选择终点";
+// let choosenavstartmode = 0;
+// let choosenavendmode = 0;
+// let map;
+// let pointFeatures;
 
 class MyMap extends React.Component {
+  editmode = 1;
+  addpointmode = 0;
+  pointdata = [];
+  pathdata = [];
+  addpathstart = -1;
+  addpathend = -1;
+  navstart = -1;
+  navend = -1;
+  addpathcap = 1;
+  PointLayer;
+  deletepointmode = 0;
+  deletepathmode = 0;
+  navpartstartbutton = "请选择起点";
+  navpartendbutton = "请选择终点";
+  choosenavstartmode = 0;
+  choosenavendmode = 0;
+  map;
+  navusecap = 0;
+  pointFeatures;
   constructor(props) {
     super(props);
     this.state = {
       pointlist: [],
-      navpartstartbutton: navpartstartbutton,
-      navpartendbutton: navpartendbutton,
+      navpartstartbutton: this.navpartstartbutton,
+      navpartendbutton: this.navpartendbutton,
       navstartbuttontype: "primary",
       navendbuttontype: "default",
       navstartbuttondisabled: false,
       navendbuttondisabled: false
     };
-
   }
   componentDidMount() {
-    map = new Map({
+    this.map = new Map({
       view: new View({
         // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
         center: [12944596.171207758, 4888630.582496259],
@@ -69,9 +87,9 @@ class MyMap extends React.Component {
       target: 'map'
     });
     this.showData();
-    map.on('singleclick', (evt) => {
+    this.map.on('singleclick', (evt) => {
       let coordinate = evt.coordinate;
-      if (addpointmode) {
+      if (this.addpointmode) {
         this.addPoint(coordinate)
       }
       // console.log(coordinate);
@@ -87,8 +105,8 @@ class MyMap extends React.Component {
       //   return layer === PointLayer;
       // }
     });
-    map.addInteraction(hoverselect);
-    map.addInteraction(clickselect);
+    this.map.addInteraction(hoverselect);
+    this.map.addInteraction(clickselect);
     hoverselect.on("select", (e) => {
 
     })
@@ -96,41 +114,40 @@ class MyMap extends React.Component {
       // console.log(e.target.getFeatures().getLength());
       if (e.target.getFeatures().getLength() > 0) {
         console.log(e.target.getFeatures().item(0).get("name"))
-        if (deletepointmode === 1) {
+        if (this.deletepointmode === 1) {
           this.deletePoint(e.target.getFeatures().item(0).get("name"));
           return;
         }
-        if (deletepathmode === 1) {
+        if (this.deletepathmode === 1) {
           console.log(e.target.getFeatures().item(0).get("start"), e.target.getFeatures().item(0).get("end"))
           this.deletePath(e.target.getFeatures().item(0).get("start"), e.target.getFeatures().item(0).get("end"));
           return;
         }
-        if (choosenavstartmode === 1) {
-          navstart = e.target.getFeatures().item(0).get("name");
-          navpartstartbutton = e.target.getFeatures().item(0).get("name").toString();
+        if (this.choosenavstartmode === 1) {
+          this.navstart = e.target.getFeatures().item(0).get("name");
+          this.navpartstartbutton = e.target.getFeatures().item(0).get("name").toString();
           this.chooseNavStartModeOff();
           return;
         }
-        if (choosenavendmode === 1) {
-          navend = e.target.getFeatures().item(0).get("name");
-          navpartendbutton = e.target.getFeatures().item(0).get("name").toString();
+        if (this.choosenavendmode === 1) {
+          this.navend = e.target.getFeatures().item(0).get("name");
+          this.navpartendbutton = e.target.getFeatures().item(0).get("name").toString();
           this.chooseNavEndModeOff();
           return;
         }
       }
-
     })
   }
 
   showData = () => {
     axios.get("/api/getpointlist").then((response) => {
-      pointdata = response.data;
+      this.pointdata = response.data;
       // console.log(pointdata);
-      pointFeatures = new sourceVector()
-      for (let i in pointdata) {
+      this.pointFeatures = new sourceVector()
+      for (let i in this.pointdata) {
         let feature = new Feature({
-          geometry: new Point(pointdata[i].coord),
-          name: pointdata[i].id
+          geometry: new Point(this.pointdata[i].coord),
+          name: this.pointdata[i].id
         });
         feature.setStyle(new Style({
           image: new Circle({
@@ -139,30 +156,30 @@ class MyMap extends React.Component {
             stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
           }),
         }));
-        pointFeatures.addFeatures([feature]);
+        this.pointFeatures.addFeatures([feature]);
       }
-      PointLayer = new LayerVector({
-        source: pointFeatures
+      this.PointLayer = new LayerVector({
+        source: this.pointFeatures
       })
       this.setState({
-        pointlist: pointdata
+        pointlist: this.pointdata
       })
-      map.addLayer(PointLayer)
+      this.map.addLayer(this.PointLayer)
     }).then(() => {
       axios.get("/api/getpath").then((response) => {
-        pathdata = response.data;
-        console.log(pathdata);
-        for (let i in pathdata) {
-          let start = pointdata.find(x => x.id === pathdata[i][0]).coord;
-          let end = pointdata.find(x => x.id === pathdata[i][1]).coord;
+        this.pathdata = response.data;
+        console.log(this.pathdata);
+        for (let i in this.pathdata) {
+          let start = this.pointdata.find(x => x.id === this.pathdata[i][0]).coord;
+          let end = this.pointdata.find(x => x.id === this.pathdata[i][1]).coord;
           let line = new LineString([start, end]);
           let PathLayer = new LayerVector({
             source: new sourceVector({
               features: [
                 new Feature({ 
                   geometry: line, 
-                  start: pathdata[i][0],
-                  end: pathdata[i][1]
+                  start: this.pathdata[i][0],
+                  end: this.pathdata[i][1]
                 })
               ]
             }),
@@ -174,7 +191,7 @@ class MyMap extends React.Component {
               })
             })
           });
-          map.addLayer(PathLayer);
+          this.map.addLayer(PathLayer);
         }
       }).catch((error) => {
         message.error(error)
@@ -187,16 +204,16 @@ class MyMap extends React.Component {
   switchAddPointMode = (checked) => {
     // showPointForm();
     if (checked) {
-      addpointmode = true;
+      this.addpointmode = true;
     } else {
-      addpointmode = false;
+      this.addpointmode = false;
     }
   }
   switchDeletePointMode = (checked) => {
     if (checked)
-      deletepointmode = 1;
+      this.deletepointmode = 1;
     else
-      deletepointmode = 0;
+      this.deletepointmode = 0;
   }
   addPoint = (coordinate) => {
     axios.post("/api/addpoint", {
@@ -204,7 +221,7 @@ class MyMap extends React.Component {
       // id: pointdata.length() + 1
     }).then((response) => {
       message.success(`成功添加 ${coordinate}`);
-      pointdata.push({
+      this.pointdata.push({
         coord: coordinate,
         id: response.data
       });
@@ -219,10 +236,10 @@ class MyMap extends React.Component {
           stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
         }),
       }));
-      pointFeatures.addFeatures([feature]);
+      this.pointFeatures.addFeatures([feature]);
       // console.log(response.data);
       this.setState({
-        pointlist: pointdata
+        pointlist: this.pointdata
       })
     }).catch((error) => {
       message.error(error)
@@ -232,8 +249,8 @@ class MyMap extends React.Component {
     axios.post("/api/deletepoint", {
       id: id
     }).then((response) => {
-      // message.success(`成果删除 id ${pointdata.length()}`);
-      pointdata = response.data;
+      message.success(`成功删除删除 id ${id}`);
+      this.pointdata = response.data;
       // pointdata.pop();
     }).catch((error) => {
       message.error(error);
@@ -251,35 +268,39 @@ class MyMap extends React.Component {
   // }
   getpathstart = (val) => {
     // console.log(val);
-    addpathstart = val;
+    this.addpathstart = val;
   }
   getpathend = (val) => {
-    addpathend = val
+    this.addpathend = val
   }
   addpathcapchange = (val) => {
-    addpathcap = val;
+    this.addpathcap = val;
   }
   addPath = () => {
-    if (addpathstart === -1 || addpathend === -1) {
+    if (this.addpathstart === -1 || this.addpathend === -1) {
       return
     }
     else {
-      let coord1 = pointdata.find(x => x.id === addpathstart);
-      let coord2 = pointdata.find(x => x.id === addpathend);
+      let coord1 = this.pointdata.find(x => x.id === this.addpathstart);
+      let coord2 = this.pointdata.find(x => x.id === this.addpathend);
       let len = (coord1.x - coord2.x) * (coord1.x - coord2.x) + (coord1.y - coord2.y) * (coord1.y - coord2.y);
       axios.post("/api/addpath", {
-        start: addpathstart,
-        end: addpathend,
+        start: this.addpathstart,
+        end: this.addpathend,
         len: len,
-        cap: addpathcap
+        cap: this.addpathcap
+      }).then((response) => {
+        message.success("添加成功")
+      }).catch((error) => {
+        message.error(error)
       })
     }
   }
   switchDeletePathMode = (checked) => {
     if (checked)
-      deletepathmode = 1
+      this.deletepathmode = 1
     else
-    deletepathmode = 0;
+    this.deletepathmode = 0;
   }
   deletePath = (delpathstart, delpathend) => {
     axios.post("/api/delpath", {
@@ -293,10 +314,10 @@ class MyMap extends React.Component {
   }
 
   chooseNavStartModeOn = () => {
-    if (choosenavendmode === 1)
+    if (this.choosenavendmode === 1)
       this.chooseNavEndModeOff();
     message.info("请在地图上选择起点")
-    choosenavstartmode = 1;
+    this.choosenavstartmode = 1;
     this.setState({
       navstartbuttontype: "default",
       navstartbuttondisabled: true,
@@ -304,18 +325,18 @@ class MyMap extends React.Component {
     });
   }
   chooseNavStartModeOff = () => {
-    choosenavstartmode = 0;
+    this.choosenavstartmode = 0;
     this.setState({
       navstartbuttontype: "default",
       navstartbuttondisabled: false,
-      navpartstartbutton: navpartstartbutton,
+      navpartstartbutton: this.navpartstartbutton,
     });
   }
   chooseNavEndModeOn = () => {
-    if (choosenavstartmode === 1)
+    if (this.choosenavstartmode === 1)
       this.chooseNavStartModeOff();
     message.info("请在地图上选择终点")
-    choosenavendmode = 1;
+    this.choosenavendmode = 1;
     this.setState({
       navendbuttontype: "default",
       navendbuttondisabled: true,
@@ -323,19 +344,19 @@ class MyMap extends React.Component {
     });
   }
   chooseNavEndModeOff = () => {
-    choosenavendmode = 0;
+    this.choosenavendmode = 0;
     this.setState({
       navendbuttontype: "default",
       navendbuttondisabled: false,
-      navpartendbutton: navpartendbutton,
+      navpartendbutton: this.navpartendbutton,
     });
   }
   switchNavStartAndEnd = () => {
     // console.log(map)
-    if (navstart === navend) {
+    if (this.navstart === this.navend) {
       return
     }
-    [navstart, navend] = [navend, navstart];
+    [this.navstart, this.navend] = [this.navend, this.navstart];
     let navpartstartbutton = this.state.navpartendbutton;
     let navpartendbutton = this.state.navpartstartbutton;
     this.setState({
@@ -343,31 +364,49 @@ class MyMap extends React.Component {
       navpartendbutton: navpartendbutton,
     })
   }
+  useCap = (checked) => {
+    if (checked)
+      this.navusecap = 1;
+    else
+      this.navusecap = 0;
+  }
+  ReRender = () => {
 
-
+  }
+  startDynamicNav = () => {
+    this.starttime = 
+    this.timerID = setInterval(
+      () => this.ReRender(),
+      100
+    );
+  }
+  endDynamicNav = () => {
+    clearInterval(this.timerID);
+  }
   getNavPath = () => {
     // console.log(navstart, navend);
     // return;
-    if (navstart === -1) {
+    if (this.navstart === -1) {
       message.error("请选择起点");
       return;
     }
-    if (navend === -1) {
+    if (this.navend === -1) {
       message.error("请选择终点");
       return;
     }
     axios.post("/api/getnavpath", {
-      start: navstart,
-      end: navend
+      start: this.navstart,
+      end: this.navend,
+      option: this.navusecap
     }).then((response) => {
       let navdata = response.data;
       let linepoint = [];
       for (let i in navdata) {
-        linepoint.push(pointdata.find(x => x.id === navdata[i]).coord);
+        linepoint.push(this.pointdata.find(x => x.id === navdata[i]).coord);
       }
-      let linestring = new LineString(linepoint);
+      this.linestring = new LineString(linepoint);
       let linestringfeature = new Feature({
-        geometry: linestring,
+        geometry: this.linestring,
         style: new Style({
           stroke: new Stroke({
             width: 5,
@@ -391,10 +430,13 @@ class MyMap extends React.Component {
           features: [linestringfeature, endmakerfeature]
         })
       });
-      map.addLayer(navLayer);
+      this.map.addLayer(navLayer);
     }).catch((error) => {
       message.error(error);
     })
+  }
+  printEdit = () => {
+    message.info(this.editmode);
   }
   render() {
     const { pointlist, navpartstartbutton, navpartendbutton, navstartbuttontype, navendbuttontype, navstartbuttondisabled, navendbuttondisabled } = this.state;
@@ -517,14 +559,16 @@ class MyMap extends React.Component {
         </Header>
         <Sider className="control">
           {
-            editmode === 1 ? editPart1 : null
+            this.editmode === 1 ? editPart1 : null
           }
           <div className="navPart" style={{ marginLeft: "30px" }}>
             <Button type={navstartbuttontype} disabled={navstartbuttondisabled} onClick={this.chooseNavStartModeOn}>{navpartstartbutton}</Button>
             &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
             <Button type={navendbuttontype} disabled={navendbuttondisabled} onClick={this.chooseNavEndModeOn}>{navpartendbutton}</Button>&nbsp;&nbsp;&nbsp;&nbsp;
+            考虑拥堵<Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked onClick={this.useCap}/>
             <Button onClick={this.getNavPath}>开始导航</Button>
           </div>
+          <Button onClick={this.printEdit}>测试</Button>
         </Sider>
         <Content className="mapbox">
           <div id="map" className="map"></div>
