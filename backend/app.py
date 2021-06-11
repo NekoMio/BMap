@@ -3,6 +3,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dijkstra import Dijkstra
+from tsp import TSP
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +31,10 @@ class Map:
         with open('app.storage', 'wb') as f:
             pickle.dump(self, f, 0)
 
+# class PointBuilding:
+#     def __init__(self):
+#         self.
+
 def loadMap() -> Map:
     if os.path.exists('app.storage') == False:
         return Map()
@@ -40,7 +46,7 @@ def init():
     global bMap
     bMap = loadMap()
 
-@app.route("/")
+@app.route("/api/")
 def welcome():
     return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edge)
 
@@ -72,9 +78,12 @@ def dbgDump():
 
 @app.route('/api/addpath/', methods=['POST'])
 def addPath():
-    if 'start' not in request.json or 'end' not in request.json or 'len' not in request.json or 'cap' not in request.json:
+    if 'start' not in request.json or 'end' not in request.json or 'cap' not in request.json:
         return "Invalid Argument", 400
-    ret = bMap.addEdge(request.json['start'], request.json['end'], request.json['len'], request.json['cap'])
+    tmp = math.sqrt((bMap.vertex[request.json['start']][0] - bMap.vertex[request.json['end']][0]) * (bMap.vertex[request.json['start']][0] - bMap.vertex[request.json['end']][0]) + \
+          (bMap.vertex[request.json['start']][1] - bMap.vertex[request.json['end']][1]) * (bMap.vertex[request.json['start']][1] - bMap.vertex[request.json['end']][1]))
+    ret = bMap.addEdge(request.json['start'], request.json['end'], tmp, request.json['cap'])
+    print(tmp)
     bMap.dump()
     return str(ret)
 
@@ -90,8 +99,25 @@ def delPath():
 def getPath():
     return jsonify(list(bMap.edge))
 
-@app.route('/api/getnavpath/')
+@app.route('/api/getnavpath', methods=['GET', 'POST'])
 def calcPath():
     if 'start' not in request.json or 'end' not in request.json or 'option' not in request.json:
         return "Invalid Argument", 400
     return jsonify(Dijkstra(request.json['start'], request.json['end'], bMap.vertex, bMap.edge, request.json['option']))
+
+@app.route('/api/updatepath/')
+def updatedis():
+    for i in bMap.edge.items():
+        if i[0][0] not in bMap.vertex or i[0][1] not in bMap.vertex:
+            continue
+        tmp = math.sqrt((bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) * (bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) + \
+              (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]) * (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]))
+        print(tmp)
+        bMap.edge[(i[0][0], i[0][1])] = (tmp, i[1][1])
+    return 'Done.'
+
+# @app.route('/api/gettsppath/')
+# def tspPath():
+#     if 'start' not in request.json or 'end' not in request.json or 'option' not in request.json or 'via' not in request.json:
+#         return "Invalid Argument", 400
+#     return jsonify(TSP(request.json['start'], request.json['end'], bMap.vertex, bMap.edge, request.json['option'],  request.json['via']))

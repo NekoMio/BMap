@@ -3,6 +3,8 @@ def Dijkstra(start,end,vertex,edge,op):
 	for i in vertex.keys():
 		connect[i]={}
 	for i in edge.items():
+		if i[0][0] not in vertex or i[0][1] not in vertex:
+			continue
 		if op==0:
 			connect[i[0][0]][i[0][1]]=i[1][0]
 			connect[i[0][1]][i[0][0]]=i[1][0]
@@ -39,4 +41,4 @@ def Dijkstra(start,end,vertex,edge,op):
 		now=pre[now]
 	ans.append(start)
 	ans.reverse()
-	return dis[end],ans
+	return ans
