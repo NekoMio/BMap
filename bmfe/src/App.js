@@ -487,7 +487,8 @@ class MyMap extends React.Component {
           })
         })
       });
-      let navLayer = new LayerVector({
+      this.map.addLayer(navLayer);
+      navLayer = new LayerVector({
         source: new sourceVector({
           features: [endmakerfeature]
         }),
