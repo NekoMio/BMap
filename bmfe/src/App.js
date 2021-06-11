@@ -51,6 +51,7 @@ class MyMap extends React.Component {
   navend = -1;
   addpathcap = 1;
   PointLayer;
+  lineselect = 0;
   deletepointmode = 0;
   deletepathmode = 0;
   navpartstartbutton = "请选择起点";
@@ -58,8 +59,23 @@ class MyMap extends React.Component {
   choosenavstartmode = 0;
   choosenavendmode = 0;
   map;
-  navusecap = 0;
+  navusecap = 1;
   pointFeatures;
+  buptmaincampus = new View({
+    center: [12952250, 4860150],
+    zoom: 16.61
+  });
+  buptshahecampus = new View({
+    center: [12944600, 4888600],
+    zoom: 16.6
+  });
+  // addpathmodechecked = false;
+  // deletepathmodechecked = false;
+  optionsWithDisabled = [
+    { label: 'Apple', value: 'Apple' },
+    { label: 'Pear', value: 'Pear' },
+    { label: 'Orange', value: 'Orange', disabled: true },
+  ];
   constructor(props) {
     super(props);
     this.state = {
@@ -72,13 +88,14 @@ class MyMap extends React.Component {
       navendbuttondisabled: false
     };
   }
-  componentDidMount() {
+  componentDidMount = () => {
     this.map = new Map({
-      view: new View({
-        // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
-        center: [12944596.171207758, 4888630.582496259],
-        zoom: 17
-      }),
+      view: this.buptmaincampus,
+      // new View({
+      //   // center: transform([116.28218, 40.15623],'EPSG:4326', 'EPSG:3857'),
+      //   center: [12944596.171207758, 4888630.582496259],
+      //   zoom: 17
+      // }),
       layers: [
         new TileLayer({
           source: new OSM()
@@ -96,14 +113,14 @@ class MyMap extends React.Component {
     })
     let hoverselect = new olSelect({
       condition: pointerMove,
-      // filter: function (feature, layer) {
-      //   return layer === PointLayer;
-      // }
+      filter: (feature, layer) => {
+        return this.lineselect ? true : layer === this.PointLayer;
+      }
     });
     let clickselect = new olSelect({
-      // filter: function (feature, layer) {
-      //   return layer === PointLayer;
-      // }
+      filter: (feature, layer) => {
+        return this.lineselect ? true : layer === this.PointLayer;
+      }
     });
     this.map.addInteraction(hoverselect);
     this.map.addInteraction(clickselect);
@@ -116,7 +133,19 @@ class MyMap extends React.Component {
         console.log(e.target.getFeatures().item(0).get("name"))
         if (this.deletepointmode === 1) {
           this.deletePoint(e.target.getFeatures().item(0).get("name"));
+          this.PointLayer.getSource().removeFeature(e.target.getFeatures().item(0));
           return;
+        }
+        if (this.addpathmode === 1) {
+          if (this.addpathstart === -1) {
+            this.addpathstart = e.target.getFeatures().item(0).get("name");
+            return;
+          }
+          if (this.addpathend === -1) {
+            this.addpathend = e.target.getFeatures().item(0).get("name");
+            this.addPath(this.addpathstart, this.addpathend);
+            this.addpathstart = this.addpathend = -1;
+          }
         }
         if (this.deletepathmode === 1) {
           console.log(e.target.getFeatures().item(0).get("start"), e.target.getFeatures().item(0).get("end"))
@@ -138,7 +167,9 @@ class MyMap extends React.Component {
       }
     })
   }
-
+  switchSelectPathMode = (checked) => {
+    this.lineselect = checked;
+  }
   showData = () => {
     axios.get("/api/getpointlist").then((response) => {
       this.pointdata = response.data;
@@ -152,7 +183,7 @@ class MyMap extends React.Component {
         feature.setStyle(new Style({
           image: new Circle({
             radius: 6,
-            fill: new Fill({ color: '#00ccff' }),
+            fill: new Fill({ color: '#ff0000' }),
             stroke: new Stroke({ color: 'rgba(0,0,0,1)' })
           }),
         }));
@@ -170,9 +201,11 @@ class MyMap extends React.Component {
         this.pathdata = response.data;
         console.log(this.pathdata);
         for (let i in this.pathdata) {
-          let start = this.pointdata.find(x => x.id === this.pathdata[i][0]).coord;
-          let end = this.pointdata.find(x => x.id === this.pathdata[i][1]).coord;
-          let line = new LineString([start, end]);
+          let start = this.pointdata.find(x => x.id === this.pathdata[i][0]);
+          if (start === undefined) continue;
+          let end = this.pointdata.find(x => x.id === this.pathdata[i][1]);
+          if (end === undefined) continue;
+          let line = new LineString([start.coord, end.coord]);
           let PathLayer = new LayerVector({
             source: new sourceVector({
               features: [
@@ -220,6 +253,7 @@ class MyMap extends React.Component {
       coord: coordinate
       // id: pointdata.length() + 1
     }).then((response) => {
+      console.log(this.pointdata);
       message.success(`成功添加 ${coordinate}`);
       this.pointdata.push({
         coord: coordinate,
@@ -250,7 +284,8 @@ class MyMap extends React.Component {
       id: id
     }).then((response) => {
       message.success(`成功删除删除 id ${id}`);
-      this.pointdata = response.data;
+      // this.pointdata = response.data;
+      this.pointdata.splice(this.pointdata.findIndex(x => x.id === id), 1);
       // pointdata.pop();
     }).catch((error) => {
       message.error(error);
@@ -276,24 +311,53 @@ class MyMap extends React.Component {
   addpathcapchange = (val) => {
     this.addpathcap = val;
   }
-  addPath = () => {
-    if (this.addpathstart === -1 || this.addpathend === -1) {
+  switchAddPathMode = (checked) => {
+    if (checked)
+      this.addpathmode = 1;
+    else
+      this.addpathmode = 0;
+  }
+  addPath = (start, end) => {
+    if (start === -1 || end === -1) {
       return
     }
     else {
-      let coord1 = this.pointdata.find(x => x.id === this.addpathstart);
-      let coord2 = this.pointdata.find(x => x.id === this.addpathend);
-      let len = (coord1.x - coord2.x) * (coord1.x - coord2.x) + (coord1.y - coord2.y) * (coord1.y - coord2.y);
+      console.log(start, end);
+      // return
+      let coord1 = this.pointdata.find(x => x.id === start);
+      let coord2 = this.pointdata.find(x => x.id === end);
+      // let len = (coord1[0] - coord2[0]) * (coord1[0] - coord2[0]) + (coord1[1] - coord2[1]) * (coord1[1] - coord2[1]);
+      // console.log(coord1.x);
       axios.post("/api/addpath", {
-        start: this.addpathstart,
-        end: this.addpathend,
-        len: len,
+        start: start,
+        end: end,
+        // len: len,
         cap: this.addpathcap
       }).then((response) => {
         message.success("添加成功")
       }).catch((error) => {
         message.error(error)
       })
+      // let line = new LineString([coord1, coord2]);
+      // let PathLayer = new LayerVector({
+      //   source: new sourceVector({
+      //     features: [
+      //       new Feature({ 
+      //         geometry: line, 
+      //         start: start,
+      //         end: end
+      //       })
+      //     ]
+      //   }),
+      //   style: new Style({
+      //     stroke: new Stroke({
+      //       width: 6,
+      //       color: "#00ccff",
+      //       lineDash: [0.1, 10]
+      //     })
+      //   })
+      // });
+      // this.map.addLayer(PathLayer);
     }
   }
   switchDeletePathMode = (checked) => {
@@ -383,6 +447,7 @@ class MyMap extends React.Component {
   endDynamicNav = () => {
     clearInterval(this.timerID);
   }
+  
   getNavPath = () => {
     // console.log(navstart, navend);
     // return;
@@ -407,12 +472,6 @@ class MyMap extends React.Component {
       this.linestring = new LineString(linepoint);
       let linestringfeature = new Feature({
         geometry: this.linestring,
-        style: new Style({
-          stroke: new Stroke({
-            width: 5,
-            color: "#00ccff"
-          })
-        })
       });
       let endmakerfeature = new Feature({
         geometry: new Point(linepoint[linepoint.length - 1]),
@@ -427,7 +486,13 @@ class MyMap extends React.Component {
       });
       let navLayer = new LayerVector({
         source: new sourceVector({
-          features: [linestringfeature, endmakerfeature]
+          features: [linestringfeature]
+        }),
+        style: new Style({
+          stroke: new Stroke({
+            width: 20,
+            color: "#00ccff"
+          })
         })
       });
       this.map.addLayer(navLayer);
@@ -447,7 +512,7 @@ class MyMap extends React.Component {
       <p>启动删点模式 <Switch onChange={this.switchDeletePointMode} /> </p>
       {/* <p>启动加路径模式 <Switch disabled onChange={this.switchAddPathMode} /></p> */}
       {/* <br /> */}
-      <h2>添加路径</h2>
+      {/* <h2>添加路径</h2>
       <Select
         id="addpathstart"
         showSearch
@@ -488,7 +553,7 @@ class MyMap extends React.Component {
             return <Option key={item.id} value={item.id}>{item.id}</Option>
           })
         }
-      </Select>
+      </Select>*/
       <InputNumber
         style={{
           width: 200,
@@ -500,9 +565,10 @@ class MyMap extends React.Component {
         onChange={this.addpathcapchange}
         stringMode
       />
-      <Button type="primary" onClick={this.addPath}>添加路径</Button>
-
+      /*<Button type="primary" onClick={this.addPath}>添加路径</Button> */}
+      <p>启动添加路径模式 <Switch onChange={this.switchAddPathMode} /> </p>
       <br />
+      <p>是否能选择边 <Switch onChange={this.switchSelectPathMode} /></p>
       <p>启动删路径模式 <Switch onChange={this.switchDeletePathMode} /> </p>
       {/* <h2>删除路径</h2>
       <Select
@@ -561,6 +627,13 @@ class MyMap extends React.Component {
           {
             this.editmode === 1 ? editPart1 : null
           }
+          {/* <Radio.Group
+          options={optionsWithDisabled}
+          onChange={this.onChange4}
+          value={value4}
+          optionType="button"
+          buttonStyle="solid"
+          /> */}
           <div className="navPart" style={{ marginLeft: "30px" }}>
             <Button type={navstartbuttontype} disabled={navstartbuttondisabled} onClick={this.chooseNavStartModeOn}>{navpartstartbutton}</Button>
             &nbsp;&nbsp;<Button type="primary" shape="circle" icon={<SwapOutlined />} onClick={this.switchNavStartAndEnd}></Button>&nbsp;&nbsp;
