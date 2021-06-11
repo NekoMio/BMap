@@ -5,7 +5,7 @@ from flask_cors import CORS
 from dijkstra import Dijkstra
 
 app = Flask(__name__)
-CORS(app);
+CORS(app)
 
 class Map:
     def __init__(self):
