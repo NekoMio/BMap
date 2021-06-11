@@ -6,7 +6,7 @@ import { SwapOutlined } from "@ant-design/icons"
 import "ol/ol.css";
 import { Map, View, Feature } from "ol";
 import TileLayer from 'ol/layer/Tile';
-import { transform } from "ol/proj";
+// import { transform } from "ol/proj";
 import { Point, LineString } from "ol/geom";
 import "ol/style";
 import OSM from 'ol/source/OSM';
@@ -16,7 +16,7 @@ import { Fill, Icon, Stroke, Style } from 'ol/style';
 import { Circle } from 'ol/style';
 import { Select as olSelect } from "ol/interaction";
 import { pointerMove } from 'ol/events/condition';
-const { Option } = Select;
+// const { Option } = Select;
 
 
 const { Header, Content, Sider } = Layout;
@@ -324,8 +324,8 @@ class MyMap extends React.Component {
     else {
       console.log(start, end);
       // return
-      let coord1 = this.pointdata.find(x => x.id === start);
-      let coord2 = this.pointdata.find(x => x.id === end);
+      // let coord1 = this.pointdata.find(x => x.id === start);
+      // let coord2 = this.pointdata.find(x => x.id === end);
       // let len = (coord1[0] - coord2[0]) * (coord1[0] - coord2[0]) + (coord1[1] - coord2[1]) * (coord1[1] - coord2[1]);
       // console.log(coord1.x);
       axios.post("/api/addpath", {
@@ -475,14 +475,6 @@ class MyMap extends React.Component {
       });
       let endmakerfeature = new Feature({
         geometry: new Point(linepoint[linepoint.length - 1]),
-        style: new Style({
-          image: new Icon({
-            src: "https://cdn.jsdelivr.net/gh/jonataswalker/map-utils@master/images/marker.png",
-            anchor: [0.5, 1],
-            opacity: 0.7,
-            rotateWithView: false
-          })
-        })
       });
       let navLayer = new LayerVector({
         source: new sourceVector({
@@ -495,6 +487,19 @@ class MyMap extends React.Component {
           })
         })
       });
+      let navLayer = new LayerVector({
+        source: new sourceVector({
+          features: [endmakerfeature]
+        }),
+        style: new Style({
+          image: new Icon({
+            src: "https://cdn.jsdelivr.net/gh/jonataswalker/map-utils@master/images/marker.png",
+            anchor: [0.5, 1],
+            opacity: 0.7,
+            rotateWithView: false
+          })
+        })
+      });
       this.map.addLayer(navLayer);
     }).catch((error) => {
       message.error(error);
@@ -504,7 +509,7 @@ class MyMap extends React.Component {
     message.info(this.editmode);
   }
   render() {
-    const { pointlist, navpartstartbutton, navpartendbutton, navstartbuttontype, navendbuttontype, navstartbuttondisabled, navendbuttondisabled } = this.state;
+    const { navpartstartbutton, navpartendbutton, navstartbuttontype, navendbuttontype, navstartbuttondisabled, navendbuttondisabled } = this.state;
     // console.log(pointlist);
     let editPart1 = (<div className="edit" style={{ marginLeft: "30px" }}>
       <h1>编辑模块</h1>
