@@ -11,9 +11,12 @@ CORS(app)
 
 class Map:
     def __init__(self):
-        self.vertex = {}
+        self.vertex = {} # p[id] = (x,y)
         self.cntVertex = 0
-        self.edge = {}
+        self.edge = {} # e[(x,y)] = (dis,ord)
+        self.building = {} # b[id] = name
+        self.buildingPoint = {} # bp[(x,y)] = id
+        self.cntBuilding = 0
     def addPoint(self, x, y):   # x,y are the Latitude and Longitude of the vertex, in float.
         self.vertex[self.cntVertex] = [x, y]
         self.cntVertex += 1
@@ -31,9 +34,6 @@ class Map:
         with open('app.storage', 'wb') as f:
             pickle.dump(self, f, 0)
 
-# class PointBuilding:
-#     def __init__(self):
-#         self.
 
 def loadMap() -> Map:
     if os.path.exists('app.storage') == False:
@@ -48,7 +48,8 @@ def init():
 
 @app.route("/api/")
 def welcome():
-    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edge)
+    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edge) \
+           + str(bMap.cntBuilding) + ' ' + str(bMap.building)  + ' ' + str(bMap.buildingPoint) 
 
 @app.route("/api/addpoint/", methods=['POST'])
 def addPoint():
@@ -83,7 +84,6 @@ def addPath():
     tmp = math.sqrt((bMap.vertex[request.json['start']][0] - bMap.vertex[request.json['end']][0]) * (bMap.vertex[request.json['start']][0] - bMap.vertex[request.json['end']][0]) + \
           (bMap.vertex[request.json['start']][1] - bMap.vertex[request.json['end']][1]) * (bMap.vertex[request.json['start']][1] - bMap.vertex[request.json['end']][1]))
     ret = bMap.addEdge(request.json['start'], request.json['end'], tmp, request.json['cap'])
-    print(tmp)
     bMap.dump()
     return str(ret)
 
@@ -105,19 +105,37 @@ def calcPath():
         return "Invalid Argument", 400
     return jsonify(Dijkstra(request.json['start'], request.json['end'], bMap.vertex, bMap.edge, request.json['option']))
 
-@app.route('/api/updatepath/')
-def updatedis():
-    for i in bMap.edge.items():
-        if i[0][0] not in bMap.vertex or i[0][1] not in bMap.vertex:
-            continue
-        tmp = math.sqrt((bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) * (bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) + \
-              (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]) * (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]))
-        print(tmp)
-        bMap.edge[(i[0][0], i[0][1])] = (tmp, i[1][1])
-    return 'Done.'
+# @app.route('/api/updatepath/')
+# def updatedis():
+#     for i in bMap.edge.items():
+#         if i[0][0] not in bMap.vertex or i[0][1] not in bMap.vertex:
+#             continue
+#         tmp = math.sqrt((bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) * (bMap.vertex[i[0][0]][0] - bMap.vertex[i[0][1]][0]) + \
+#               (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]) * (bMap.vertex[i[0][0]][1] - bMap.vertex[i[0][1]][1]))
+#         print(tmp)
+#         bMap.edge[(i[0][0], i[0][1])] = (tmp, i[1][1])
+#     return 'Done.'
+
+@app.route('/api/addbuilding/', methods=['POST'])
+def addBuilding():
+    if 'name' not in request.json or 'points' not in request.json:
+        return "Invalid Argument", 400
+    for i in request.json['points']:
+        bMap.buildingPoint[i] = bMap.cntBuilding
+    bMap.building[bMap.cntBuilding] = request.json['name']
+    bMap.cntBuilding += 1
+
 
 # @app.route('/api/gettsppath/')
 # def tspPath():
 #     if 'start' not in request.json or 'end' not in request.json or 'option' not in request.json or 'via' not in request.json:
 #         return "Invalid Argument", 400
 #     return jsonify(TSP(request.json['start'], request.json['end'], bMap.vertex, bMap.edge, request.json['option'],  request.json['via']))
+
+# @app.route('/api/qwq')
+# def qwq():
+#     bMap.building = {} # b[id] = name
+#     bMap.buildingPoint = {} # bp[(x,y)] = id
+#     bMap.cntBuilding = 0
+#     bMap.dump()
+#     return 'Done.'
