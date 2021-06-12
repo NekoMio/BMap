@@ -60,7 +60,13 @@ class MyMap extends React.Component {
   choosenavendmode = 0;
   map;
   navusecap = 1;
+  dynamicpause = false;
+  linestringfeature;
   pointFeatures;
+  selffeature;
+  selflayer;
+  startpos;
+  noworder;
   buptmaincampus = new View({
     center: [12952250, 4860150],
     zoom: 16.61
@@ -434,20 +440,71 @@ class MyMap extends React.Component {
     else
       this.navusecap = 0;
   }
+  renderSelf = () => {
+    this.selffeature = new Feature({
+      geometry: new Point(this.startpos)
+    })
+    this.selffeature.setStyle(new Style({
+      image: new Icon({
+        scale: .7, opacity: 1,
+        rotateWithView: false,
+        rotation: 0,
+        anchor: [0.5, 0.5],
+        src: 'https://cdn.jsdelivr.net/gh/NekoMio/BMap@master/static/cursor.png',
+      })
+    }));
+    this.selflayer.getSource().clear();
+    this.selflayer.getSource().addFeatures(this.selffeature);
+  }
   ReRender = () => {
-
+    // if (dynamicpause === true) {
+    //   return;
+    // }
+    // this.linepoint = [this.startpos];
+    if (this.noworder === this.navdata.length) {
+      clearInterval(this.timerID);
+      message.success("导航完成");
+      return;
+    }
+    // this.noworder++;
+    // console.log(this.noworder);
+    // for (let i in this.navdata) {
+    //   if (i >= this.noworder) {
+    //     this.linepoint.push(this.pointdata.find(x => x.id === this.navdata[i]).coord);
+    //   }
+    // }
+    let sta = this.pointdata.find((x) => x.id === this.navdata[this.noworder][0]).coord;
+    let end = this.pointdata.find((x) => x.id === this.navdata[this.noworder][1]).coord;
+    console.log(sta, end);
+    if ((end[0] - this.startpos[0]) * (end[0] - this.startpos[0]) + (end[1] - this.startpos[1]) * (end[1] - this.startpos[1]) > 0.25) {
+      this.startpos[0] += (end[0] - sta[0]) / (this.navdata[this.noworder][2] * this.navdata[this.noworder][3]) * 0.5;
+      this.startpos[1] += (end[1] - sta[1]) / (this.navdata[this.noworder][2] * this.navdata[this.noworder][3]) * 0.5;
+    } else {
+      this.startpos = [...end];
+      this.noworder++;
+    }
+    let linepointtmp = [this.startpos];
+    for (let i in this.linepoint) {
+      if (i > this.noworder)
+        linepointtmp.push(this.linepoint[i]);
+    }
+    this.linestring = new LineString(linepointtmp);
+    this.linestringfeature = new Feature({
+      geometry: this.linestring,
+    });
+    this.navLayer.getSource().clear();
+    this.navLayer.getSource().addFeatures([this.linestringfeature]);
   }
   startDynamicNav = () => {
-    this.starttime = 
+    this.noworder = 0;
     this.timerID = setInterval(
       () => this.ReRender(),
-      100
+      50
     );
   }
   endDynamicNav = () => {
     clearInterval(this.timerID);
   }
-  
   getNavPath = () => {
     // console.log(navstart, navend);
     // return;
@@ -464,44 +521,51 @@ class MyMap extends React.Component {
       end: this.navend,
       option: this.navusecap
     }).then((response) => {
-      let navdata = response.data;
-      let linepoint = [];
-      for (let i in navdata) {
-        linepoint.push(this.pointdata.find(x => x.id === navdata[i]).coord);
+      this.navdata = response.data;
+      this.linepoint = [this.pointdata.find(x => x.id === this.navdata[0][0]).coord];
+      this.startpos = [...this.linepoint[0]];
+      for (let i in this.navdata) {
+        this.linepoint.push(this.pointdata.find(x => x.id === this.navdata[i][1]).coord);
       }
-      this.linestring = new LineString(linepoint);
-      let linestringfeature = new Feature({
+      this.linestring = new LineString(this.linepoint);
+      this.linestringfeature = new Feature({
         geometry: this.linestring,
       });
       let endmakerfeature = new Feature({
-        geometry: new Point(linepoint[linepoint.length - 1]),
+        geometry: new Point(this.linepoint[this.linepoint.length - 1]),
       });
-      let navLayer = new LayerVector({
+      this.selflayer = new LayerVector({
         source: new sourceVector({
-          features: [linestringfeature]
+          features: []
+        })
+      });
+      this.renderSelf();
+      this.navLayer = new LayerVector({
+        source: new sourceVector({
+          features: [this.linestringfeature]
         }),
         style: new Style({
           stroke: new Stroke({
-            width: 20,
+            width: 10,
             color: "#00ccff"
-          })
+          }),
         })
       });
-      this.map.addLayer(navLayer);
-      navLayer = new LayerVector({
+      this.map.addLayer(this.navLayer);
+      let endtagLayer = new LayerVector({
         source: new sourceVector({
           features: [endmakerfeature]
         }),
         style: new Style({
           image: new Icon({
-            src: "https://cdn.jsdelivr.net/gh/jonataswalker/map-utils@master/images/marker.png",
+            src: "https://cdn.jsdelivr.net/gh/NekoMio/BMap@master/static/marker.png",
             anchor: [0.5, 1],
             opacity: 0.7,
             rotateWithView: false
           })
         })
       });
-      this.map.addLayer(navLayer);
+      this.map.addLayer(endtagLayer);
     }).catch((error) => {
       message.error(error);
     })
@@ -646,8 +710,12 @@ class MyMap extends React.Component {
             <Button type={navendbuttontype} disabled={navendbuttondisabled} onClick={this.chooseNavEndModeOn}>{navpartendbutton}</Button>&nbsp;&nbsp;&nbsp;&nbsp;
             考虑拥堵<Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked onClick={this.useCap}/>
             <Button onClick={this.getNavPath}>开始导航</Button>
+            <br/>
+            <p><Button onClick={this.startDynamicNav}>动态导航开始</Button> &nbsp;&nbsp;&nbsp;&nbsp;
+            <Button onClick={this.endDynamicNav}>动态导航暂停</Button>
+            </p>
           </div>
-          <Button onClick={this.printEdit}>测试</Button>
+          
         </Sider>
         <Content className="mapbox">
           <div id="map" className="map"></div>
