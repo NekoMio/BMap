@@ -444,17 +444,10 @@ class MyMap extends React.Component {
     this.selffeature = new Feature({
       geometry: new Point(this.startpos)
     })
-    this.selffeature.setStyle(new Style({
-      image: new Icon({
-        scale: .7, opacity: 1,
-        rotateWithView: false,
-        rotation: 0,
-        anchor: [0.5, 0.5],
-        src: 'https://cdn.jsdelivr.net/gh/NekoMio/BMap@master/static/cursor.png',
-      })
-    }));
+    // this.selffeature.setStyle();
     this.selflayer.getSource().clear();
     this.selflayer.getSource().addFeatures(this.selffeature);
+    // this.selflayer.setStyle()
   }
   ReRender = () => {
     // if (dynamicpause === true) {
@@ -483,6 +476,7 @@ class MyMap extends React.Component {
       this.startpos = [...end];
       this.noworder++;
     }
+    this.renderSelf();
     let linepointtmp = [this.startpos];
     for (let i in this.linepoint) {
       if (i > this.noworder)
@@ -534,12 +528,27 @@ class MyMap extends React.Component {
       let endmakerfeature = new Feature({
         geometry: new Point(this.linepoint[this.linepoint.length - 1]),
       });
+      this.selffeature = new Feature({
+        geometry: new Point(this.startpos)
+      })
       this.selflayer = new LayerVector({
         source: new sourceVector({
-          features: []
+          features: [this.selffeature]
+        }),
+        style: new Style({
+          image: new Icon({
+            opacity: 1,
+            rotateWithView: false,
+            rotation: 0,
+            imgsize: [50, 50],
+            anchor: [0.5, 0.5],
+            src: 'https://cdn.jsdelivr.net/gh/NekoMio/BMap@master/static/mine.png',
+          })
+          // zIndex: Infinity
         })
       });
-      this.renderSelf();
+      this.map.addLayer(this.selflayer);
+      // this.renderSelf();
       this.navLayer = new LayerVector({
         source: new sourceVector({
           features: [this.linestringfeature]
