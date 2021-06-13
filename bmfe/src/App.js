@@ -582,6 +582,9 @@ class MyMap extends React.Component {
   printEdit = () => {
     message.info(this.editmode);
   }
+  reload = () => {
+    window.location.reload()
+  }
   render() {
     const { navpartstartbutton, navpartendbutton, navstartbuttontype, navendbuttontype, navstartbuttondisabled, navendbuttondisabled } = this.state;
     // console.log(pointlist);
@@ -701,6 +704,7 @@ class MyMap extends React.Component {
       <div className="App">
         <Header>
           BMap
+          &nbsp;&nbsp;&nbsp;&nbsp;<Button onClick={this.reload}>刷新</Button>
         </Header>
         <Sider className="control">
           {
