@@ -149,7 +149,7 @@ class MyMap extends React.Component {
         return;
       }
       if (this.choosenavstartmode === 1) {
-        api.post("/api/getnearestpoint", {
+        api.post("https://bmap.nekomio.com/api/getnearestpoint", {
           point: coordinate
         }).then((response) => {
           this.navstart = response.data;
@@ -160,7 +160,7 @@ class MyMap extends React.Component {
         return;
       }
       if (this.choosenavendmode === 1) {
-        api.post("/api/getnearestpoint", {
+        api.post("https://bmap.nekomio.com/api/getnearestpoint", {
           point: coordinate
         }).then((response) => {
           this.navend = response.data;
@@ -172,7 +172,7 @@ class MyMap extends React.Component {
       }
       if (this.gobymode === 1) {
         if (this.gobyaddmode === 1) {
-          api.post("/api/getnearestpoint", {
+          api.post("https://bmap.nekomio.com/api/getnearestpoint", {
             point: coordinate
           }).then((response) => {
             this.gobylist.push(response.data);
@@ -184,7 +184,7 @@ class MyMap extends React.Component {
         }
       }
       if (this.searchbuildselect === 1) {
-        api.post("/api/getbuildings", {
+        api.post("https://bmap.nekomio.com/api/getbuildings", {
           point: coordinate // 这个是[x,y]的数组
         }).then((response) => {
           this.setState({
@@ -284,7 +284,7 @@ class MyMap extends React.Component {
     this.lineselect = checked;
   }
   showData = () => {
-    api.get("/api/getpointlist").then((response) => {
+    api.get("https://bmap.nekomio.com/api/getpointlist").then((response) => {
       this.pointdata = response.data;
       // console.log(pointdata);
       this.pointFeatures = new sourceVector()
@@ -310,7 +310,7 @@ class MyMap extends React.Component {
       })
       this.map.addLayer(this.PointLayer)
     }).then(() => {
-      api.get("/api/getpathbike").then((response) => {
+      api.get("https://bmap.nekomio.com/api/getpathbike").then((response) => {
         this.bikepathdata = response.data;
         // console.log(this.bikepathdata);
         // for (let i in this.bikepathdata) {
@@ -343,7 +343,7 @@ class MyMap extends React.Component {
         message.error(error)
       })
     }).then(() => {
-      // api.get("/api/getpath").then((response) => {
+      // api.get("https://bmap.nekomio.com/api/getpath").then((response) => {
       //   this.pathdata = response.data;
       //   console.log(this.pathdata);
       //   for (let i in this.pathdata) {
@@ -405,7 +405,7 @@ class MyMap extends React.Component {
       })
   }
   addPoint = (coordinate) => {
-    api.post("/api/addpoint", {
+    api.post("https://bmap.nekomio.com/api/addpoint", {
       coord: coordinate
       // id: pointdata.length() + 1
     }).then((response) => {
@@ -436,7 +436,7 @@ class MyMap extends React.Component {
     })
   }
   deletePoint = (id) => {
-    api.post("/api/deletepoint", {
+    api.post("https://bmap.nekomio.com/api/deletepoint", {
       id: id
     }).then((response) => {
       message.success(`成功删除删除 id ${id}`);
@@ -449,7 +449,7 @@ class MyMap extends React.Component {
   }
   // getPointList = () => {
   //   if (pointdata.length === 0) {
-  //     api.get("/api/getpointlist").then((response) => {
+  //     api.get("https://bmap.nekomio.com/api/getpointlist").then((response) => {
   //       pointdata = response.data
   //     })
   //   }
@@ -484,7 +484,7 @@ class MyMap extends React.Component {
       // let coord2 = this.pointdata.find(x => x.id === end);
       // let len = (coord1[0] - coord2[0]) * (coord1[0] - coord2[0]) + (coord1[1] - coord2[1]) * (coord1[1] - coord2[1]);
       // console.log(coord1.x);
-      api.post("/api/addpath" + (this.bikeeditmode ? "bike" : ""), {
+      api.post("https://bmap.nekomio.com/api/addpath" + (this.bikeeditmode ? "bike" : ""), {
         start: start,
         end: end,
         // len: len,
@@ -523,7 +523,7 @@ class MyMap extends React.Component {
       this.deletepathmode = 0;
   }
   deletePath = (delpathstart, delpathend) => {
-    api.post("/api/delpath" + (this.bikeeditmode ? "bike" : ""), {
+    api.post("https://bmap.nekomio.com/api/delpath" + (this.bikeeditmode ? "bike" : ""), {
       start: delpathstart,
       end: delpathend
     }).then((response) => {
@@ -535,7 +535,7 @@ class MyMap extends React.Component {
   // vnavmode = 0;
   switchNavStartMode = (checked) => {
     if (checked) {
-      api.get("/api/getvlist").then((response) => {
+      api.get("https://bmap.nekomio.com/api/getvlist").then((response) => {
         this.setState({
           vposlist: response.data
         })
@@ -551,7 +551,7 @@ class MyMap extends React.Component {
   }
   navVStart = (val) => {
     this.navstart = val
-    api.get("/api/getvlist").then((response) => {
+    api.get("https://bmap.nekomio.com/api/getvlist").then((response) => {
       this.setState({
         vposlist: response.data
       })
@@ -559,7 +559,7 @@ class MyMap extends React.Component {
   }
   navVEnd = (val) => {
     this.navend = val;
-    api.get("/api/getvlist").then((response) => {
+    api.get("https://bmap.nekomio.com/api/getvlist").then((response) => {
       this.setState({
         vposlist: response.data
       })
@@ -813,9 +813,9 @@ class MyMap extends React.Component {
     }
     let url;
     if (this.gobymode === 1) {
-      url = "/api/gettsppath" + (this.navtype === undefined ? "" : "cross") + (this.bikemode ? "bike" : "");
+      url = "https://bmap.nekomio.com/api/gettsppath" + (this.navtype === undefined ? "" : "cross") + (this.bikemode ? "bike" : "");
     } else {
-      url = "/api/getnavpath" + (this.navtype === undefined ? "" : "cross") + (this.bikemode ? "bike" : "");
+      url = "https://bmap.nekomio.com/api/getnavpath" + (this.navtype === undefined ? "" : "cross") + (this.bikemode ? "bike" : "");
     }
     if (this.startpos === undefined) {
       if (this.navstart === -1) {
@@ -899,7 +899,7 @@ class MyMap extends React.Component {
       this.searchbuildselect = 1;
       message.warning("请在地图上选择一个点");
     } else {
-      api.post("/api/getbuildings", {
+      api.post("https://bmap.nekomio.com/api/getbuildings", {
         point: this.startpos // 这个是[x,y]的数组
       }).then((response) => {
         this.setState({
@@ -944,7 +944,7 @@ class MyMap extends React.Component {
         addbuildinginfo: "添加一个建筑物"
       });
       // return;
-      api.post("/api/addbuilding", {
+      api.post("https://bmap.nekomio.com/api/addbuilding", {
         name: this.buildname,
         points: this.addbuildinglist
       }).then((response) => {
