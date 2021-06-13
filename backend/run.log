@@ -1,0 +1,96 @@
+[NAVPATH]Distance from 20 to 14 is 474.7863872209461.
+[NAVPATH]Distance from 19 to 14 is 431.2583392561468.
+[NAVPATH]Distance from 19 to 14 is 431.2583392561468.
+[NAVPATH]Distance from 5 to 14 is 391.99908176640145.
+[GETPOINT]Point list requested. 337 Points in map.
+[GETPATH]Bike Path List Requested. 253 Paths in map.
+[NEARPNT]Selecting Point 17.
+[NEARPNT]Selecting Point 27.
+[NAVPATH]Distance from 17 to 27 is 344.5615860633058.
+[NEARPNT]Selecting Point 28.
+[NEARPNT]Selecting Point 277.
+[NEARPNT]Selecting Point 278.
+[NEARPNT]Selecting Point 275.
+[TSPNAVI]TSP length from 28 to 275 using [277, 278] is 497.76807882726155.
+[NEARPNT]Selecting Point 17.
+[GETBUIL]Closest Building from (12944540.87042557, 4888906.873319953) are ['学生食堂', '教工食堂', '生活服务区', '雁北园', '行政办公楼'].
+[NEARPNT]Selecting Point 66.
+[NEARPNT]Selecting Point 86.
+[GETPOINT]Point list requested. 337 Points in map.
+[GETPATH]Bike Path List Requested. 253 Paths in map.
+[NEARPNT]Selecting Point 70.
+[NEARPNT]Selecting Point 107.
+[NEARPNT]Selecting Point 138.
+[NEARPNT]Selecting Point 86.
+[TSPNAVI]TSP length from 70 to 107 using [138, 86] is 1384.0257364379984.
+[TSPNAVI]TSP length from 79 to 107 using [] is 484.6027583851054.
+[TSPNAVI]TSP length from 82 to 107 using [] is 409.1686346505511.
+[TSPNAVI]TSP length from 82 to 107 using [] is 409.1686346505511.
+[TSPNAVI]TSP length from 86 to 107 using [] is 342.38366081243646.
+[TSPNAVI]TSP length from 86 to 107 using [] is 342.38366081243646.
+[TSPNAVI]TSP length from 85 to 107 using [] is 255.56720604485602.
+[TSPNAVI]TSP length from 85 to 107 using [] is 255.56720604485602.
+[TSPNAVI]TSP length from 84 to 107 using [] is 151.73559858023452.
+[TSPNAVI]TSP length from 84 to 107 using [] is 151.73559858023452.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[TSPNAVI]TSP length from 185 to 107 using [] is 67.6312213471725.
+[GETPOINT]Point list requested. 337 Points in map.
+[GETPATH]Bike Path List Requested. 253 Paths in map.
+[NEARPNT]Selecting Point 16.
+[NEARPNT]Selecting Point 78.
+[NAVPATH]Distance from 16 to 78 is 3995.3996026423265.
+[NEARPNT]Selecting Point 310.
+[NAVPATH]Distance from 58 to 310 is 630.6001342637298.
+[NAVPATH]Distance from 55 to 310 is 840.8789637170364.
+[NAVPATH]Distance from 58 to 310 is 630.6001342637298.
+[NAVPATH]Distance from 45 to 310 is 391.24200902825424.
+[NEARPNT]Selecting Point 325.
+[NEARPNT]Selecting Point 32.
+[NAVPATH]BIKE Distance from 325 to 32 is 187.42659644972676.
+[NEARPNT]Selecting Point 15.
+[NAVPATH]BIKE Distance from 281 to 15 is 38.277378833852644.
+[NAVPATH]BIKE Distance from 15 to 15 is 0.
+[NEARPNT]Selecting Point 324.
+[GETPOINT]Point list requested. 337 Points in map.
+[GETPATH]Bike Path List Requested. 253 Paths in map.
+[NEARPNT]Selecting Point 27.
+[NEARPNT]Selecting Point 32.
+[NAVPATH]BIKE Distance from 27 to 32 is 194.82069340347016.
+[NEARPNT]Selecting Point 15.
+[NAVPATH]BIKE Distance from 319 to 15 is 121.32743728783393.
+[NAVPATH]BIKE Distance from 28 to 15 is 167.04875048348512.
+[NEARPNT]Selecting Point 27.
+[NEARPNT]Selecting Point 2.
+[NAVPATH]BIKE Distance from 27 to 2 is 263.2547426621279.
+[NEARPNT]Selecting Point 5.
+[NAVPATH]BIKE Distance from 325 to 5 is 146.971489254624.
+[NAVPATH]BIKE Distance from 280 to 5 is 122.47472985404397.
+[NEARPNT]Selecting Point 27.
+[NEARPNT]Selecting Point 32.
+[NAVPATH]Distance from 27 to 32 is 389.63569552366624.
+[NAVPATH]Distance from 27 to 32 is 389.63569552366624.
+[NAVPATH]Distance from 28 to 32 is 268.54682113806484.
+[NAVPATH]Distance from 28 to 32 is 268.54682113806484.
+[NAVPATH]Distance from 11 to 32 is 208.46183078051575.
+[NAVPATH]Distance from 11 to 32 is 208.46183078051575.
+[NAVPATH]Distance from 30 to 32 is 133.29839545897775.
+[NAVPATH]Distance from 30 to 32 is 133.29839545897775.
+[NAVPATH]Distance from 31 to 32 is 85.50533922179987.
+[NAVPATH]Distance from 31 to 32 is 85.50533922179987.
+[NAVPATH]Distance from 32 to 32 is 0.
+[GETPOINT]Point list requested. 337 Points in map.
+[GETPATH]Bike Path List Requested. 253 Paths in map.
+[NEARPNT]Selecting Point 27.
+[NEARPNT]Selecting Point 32.
+[NAVPATH]Distance from 27 to 32 is 389.63569552366624.
+[NEARPNT]Selecting Point 30.
+[NAVPATH]Distance from 28 to 30 is 135.2484256790871.
+[NAVPATH]Distance from 11 to 30 is 75.16343532153797.
+[NEARPNT]Selecting Point 86.
+[NEARPNT]Selecting Point 78.
+[NAVPATH]Distance from 86 to 78 is 328.7552930386338.
+[NEARPNT]Selecting Point 78.
