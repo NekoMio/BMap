@@ -52,11 +52,12 @@ def loadMap() -> Map:
 def writeLog(x):
     logFile.write(x+"\n")
     logFile.flush()
-
+    
 @app.before_first_request
 def init():
     global bMap, logFile
     logFile = open("run.log", "w")
+    logLock = False
     bMap = loadMap()
 
 @app.route("/api/")
@@ -349,3 +350,9 @@ def tspPathCrossBike():
             llen, ppath = TSP(337, request.json['end'], bMap.vertex, bMap.edgeBike, request.json['option'], gobylist[0])
     writeLog("[NAVPATH]BIKE TSP Distance from %s to %s is %s." % (str(request.json['start']),str(request.json['end']),str(len+llen)))
     return jsonify({"len":len+llen, "path":path+ppath})
+
+@app.route('/api/log')
+def readLog():
+    with open("run.log", "r") as f:
+        tmp = f.read()
+        return "<pre>"+tmp+"</pre>"
