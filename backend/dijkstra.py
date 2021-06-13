@@ -47,4 +47,4 @@ def Dijkstra(start,end,vertex,edge,op):
 			ret.append((ans[i-1],ans[i])+edge[(ans[i-1],ans[i])])
 		else:
 			ret.append((ans[i-1],ans[i])+edge[(ans[i],ans[i-1])])
-	return ret
+	return dis[end],ret
