@@ -3,6 +3,7 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dijkstra import Dijkstra
+import datetime
 from tsp import TSP
 import math
 import random
@@ -50,7 +51,7 @@ def loadMap() -> Map:
         return pickle.load(f)
 
 def writeLog(x):
-    logFile.write(x+"\n")
+    logFile.write(str(datetime.datetime.now())+" "+x+"\n")
     logFile.flush()
     
 @app.before_first_request
@@ -364,5 +365,6 @@ def updatePath():
     for key,value in bMap.edgeBike.items():
         newbike[key]=value
     bMap.edgeBike=newbike
+    bMap.dump()
     return "Done."
 
