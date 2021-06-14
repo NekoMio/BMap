@@ -62,7 +62,7 @@ def init():
 
 @app.route("/api/")
 def welcome():
-    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edge) \
+    return "Welcome to bMap Backend!" + '\n' + str(bMap.cntVertex) + ' ' + str(bMap.vertex) + '\n' + str(len(bMap.edge)) + ' ' + str(bMap.edgeBike) \
            + str(bMap.cntBuilding) + ' ' + str(bMap.building)  + ' ' + str(bMap.buildingPoint) 
 
 @app.route("/api/addpoint/", methods=['POST'])
@@ -356,3 +356,13 @@ def readLog():
     with open("run.log", "r") as f:
         tmp = f.read()
         return "<pre>"+tmp+"</pre>"
+
+
+@app.route('/api/qwq')
+def updatePath():
+    newbike = bMap.edge
+    for key,value in bMap.edgeBike.items():
+        newbike[key]=value
+    bMap.edgeBike=newbike
+    return "Done."
+
